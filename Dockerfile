@@ -17,4 +17,4 @@ WORKDIR /app
 # Sang Giai đoạn 1 (build), lấy cái file .jar vừa tạo ra đem về đây
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]c
+ENTRYPOINT ["java", "-jar", "app.jar"]
