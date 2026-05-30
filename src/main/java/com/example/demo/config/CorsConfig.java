@@ -17,10 +17,14 @@ public class CorsConfig {
     public FilterRegistrationBean<CorsFilter> corsFilterRegistration() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
+
+        // SỬA Ở ĐÂY: Thêm đường link Vercel của bạn vào danh sách được phép
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:*",
-                "http://127.0.0.1:*"
+                "http://127.0.0.1:*",
+                "https://me-trang-coffeshop-management.vercel.app" // Dòng cứu rỗi thế giới là đây!
         ));
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));
