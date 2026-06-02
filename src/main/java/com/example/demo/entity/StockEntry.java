@@ -9,10 +9,10 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "stock_entries")
-@Getter 
-@Setter 
-@NoArgsConstructor 
-@AllArgsConstructor 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class StockEntry {
     @Id
