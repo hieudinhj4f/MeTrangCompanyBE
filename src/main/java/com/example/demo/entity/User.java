@@ -13,7 +13,7 @@ import java.util.UUID;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID) 
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false, unique = true, length = 50)
@@ -22,7 +22,7 @@ public class User {
     @Column(name = "password", nullable = false, columnDefinition = "TEXT")
     private String password;
 
-    @Column(name = "full_name") 
+    @Column(name = "full_name")
     private String fullName;
 
     @Column(length = 20)
@@ -35,14 +35,14 @@ public class User {
     @Column(length = 20)
     private Role role;
 
-    @Column(name = "status") 
+    @Column(name = "status")
     private Boolean isActive = true;
 
     public enum Role {
-        ADMIN, DISPATCHER, WAREHOUSE_KEEPER, CUSTOMER
+        ADMIN, DISPATCHER, WAREHOUSE_KEEPER, CUSTOMER, STAFF
     }
 
-   @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "customer_id", referencedColumnName = "id", nullable = true) 
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "customer_id", referencedColumnName = "id", nullable = true)
     private Customer customer;
- }
+}
