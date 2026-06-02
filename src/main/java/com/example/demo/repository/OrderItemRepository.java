@@ -6,5 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
-    // Spring Data JPA sẽ tự động cung cấp các hàm save, findById, delete...
 }
