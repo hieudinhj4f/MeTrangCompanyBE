@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 
 @Repository
 public interface StockEntryRepository extends JpaRepository<StockEntry, UUID> {
@@ -15,6 +16,9 @@ public interface StockEntryRepository extends JpaRepository<StockEntry, UUID> {
     List<StockEntry> findBySupplierId(Integer supplierId);
 
     List<StockEntry> findByWarehouse_Id(Integer warehouseId);
+
+    @Query("SELECT se FROM StockEntry se JOIN FETCH se.warehouse WHERE se.id = :id")
+    Optional<StockEntry> findByIdWithWarehouse(@Param("id") Long id);
 
     @Query("SELECT DISTINCT se FROM StockEntry se LEFT JOIN FETCH se.items i LEFT JOIN FETCH i.product LEFT JOIN FETCH se.supplier WHERE se.warehouse.id = :warehouseId")
     List<StockEntry> findByWarehouseIdWithItems(@Param("warehouseId") Integer warehouseId);

@@ -20,9 +20,6 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    /**
-     * Lấy danh sách nhân viên cho bảng AccountManagement
-     */
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<UserResponse> responses = userService.getAllUsers().stream()
@@ -37,9 +34,6 @@ public class UserController {
         return ResponseEntity.ok(responses);
     }
 
-    /**
-     * Lấy chi tiết một nhân viên
-     */
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable UUID id) {
         return userService.getUserById(id)
@@ -53,10 +47,7 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * Đăng ký nhân viên mới (POST /api/users)
-     * Đã xóa hàm trùng lặp để hết lỗi Ambiguous mapping
-     */
+
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest request) {
         User user = User.builder()
@@ -66,7 +57,7 @@ public class UserController {
                 .email(request.getEmail())
                 .phone(request.getPhone())
                 .role(request.getRole())
-                .isActive(true) // CHỈ ĐỂ true, KHÔNG CÓ CHỮ isActive:
+                .isActive(true) 
                 .build();
 
         User savedUser = userService.saveUser(user);

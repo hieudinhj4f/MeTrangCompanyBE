@@ -35,12 +35,12 @@ public class ProductPrice {
     private String priceType; 
 
     private String description;
-
+//??
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
-
+//??
     @Column(name = "is_ingredient")
-    private Boolean isIngredient = false; // Mặc định là false (là sản phẩm bán)
+    private Boolean isIngredient = false;
 
     @PrePersist
     protected void onCreate() {

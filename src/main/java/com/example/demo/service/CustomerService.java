@@ -22,9 +22,6 @@ public class CustomerService {
     private final WalletRepository walletRepository;
     private final UserRepository userRepository;
 
-    /**
-     * Ensures a CUSTOMER user has a linked Customer + Wallet. Returns the customer id.
-     */
     @Transactional
     public UUID ensureCustomerForUserId(UUID userId) {
         User user = userRepository.findById(userId)
@@ -40,14 +37,13 @@ public Customer ensureCustomerForUser(User user) {
     }
 
     Customer customer = Customer.builder()
-            .id(user.getId()) // QUAN TRỌNG: Lấy ID của User làm ID Customer
+            .id(user.getId()) 
             .fullName(user.getFullName() != null ? user.getFullName() : user.getUsername())
             .email(user.getEmail())
             .phoneNumber(user.getPhone())
             .totalSpent(BigDecimal.ZERO)
             .build();
             
-    // Dùng saveAndFlush để chốt dữ liệu xuống DB ngay cho các bước sau
     customer = customerRepository.saveAndFlush(customer);
 
     ensureWalletExists(customer);
@@ -57,9 +53,7 @@ public Customer ensureCustomerForUser(User user) {
     return customer;
 }
 
-    /**
-     * Resolves an id that may be either a customer id or a user id (new accounts).
-     */
+
     @Transactional
     public Customer resolveOrCreateCustomer(UUID id) {
         return customerRepository.findById(id)

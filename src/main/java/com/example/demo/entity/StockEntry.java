@@ -5,7 +5,6 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "stock_entries")
@@ -15,9 +14,10 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class StockEntry {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supplier_id")
@@ -29,6 +29,9 @@ public class StockEntry {
 
     @Column(name = "total_price")
     private BigDecimal totalPrice;
+
+    @Column(name = "isApproved")
+    private Boolean isApproved;
 
     @Column(name = "entry_date")
     private LocalDateTime entryDate;

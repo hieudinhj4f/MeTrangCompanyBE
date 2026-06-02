@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -90,17 +91,16 @@ public class WarehouseService {
         return transactions;
     }
 
+
     @Transactional
     public void createImportStockEntry(ReceiptRequest request) {
-
         Warehouse warehouse = findWarehouseEntity(request.getWarehouseId());
 
         StockEntry stockEntry = new StockEntry();
         stockEntry.setWarehouse(warehouse);
-        
-
         stockEntry.setEntryDate(request.getCreatedDate() != null ? request.getCreatedDate() : LocalDateTime.now());
-        
+
+        stockEntry.setIsApproved(false); 
 
         List<StockEntryItem> entryItems = new ArrayList<>();
         for (ReceiptRequest.ItemDetail itemDto : request.getItems()) {
@@ -111,15 +111,38 @@ public class WarehouseService {
             entryItem.setStockEntry(stockEntry);
             entryItem.setProduct(product);
             entryItem.setQuantity(itemDto.getQuantity());
+            
             if (itemDto.getPrice() != null && itemDto.getPrice() > 0) {
                 entryItem.setPurchasePrice(java.math.BigDecimal.valueOf(itemDto.getPrice()));
             }
 
             entryItems.add(entryItem);
-            inventoryService.addStock(warehouse.getId(), product.getId(), itemDto.getQuantity());
+            // ĐÃ XÓA dòng inventoryService.addStock ở đây để đảm bảo an toàn dữ liệu
         }
 
         stockEntry.setItems(entryItems);
         stockEntryRepository.save(stockEntry);
+    }
+
+    @Transactional
+    public void approveReceivedStock(Integer warehouseId, Long receiptId) {
+        StockEntry entry = stockEntryRepository.findByIdWithWarehouse(receiptId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu nhập với id: " + receiptId));
+        
+        if (!entry.getWarehouse().getId().equals(warehouseId)) {
+            throw new RuntimeException("Phiếu nhập không thuộc kho này");
+        }
+        if (entry.getIsApproved()) {
+            throw new RuntimeException("Phiếu nhập đã được duyệt rồi, không thể duyệt lại!");
+        }
+
+        // BƯỚC QUYẾT ĐỊNH: Chỉ cộng số lượng vào kho khi Quản lý bấm nút Phê Duyệt
+        for (StockEntryItem item : entry.getItems()) {
+            inventoryService.addStock(warehouseId, item.getProduct().getId(), item.getQuantity());
+        }
+
+        // Đổi trạng thái phiếu thành Đã duyệt
+        entry.setIsApproved(true);
+        stockEntryRepository.save(entry);
     }
 }
