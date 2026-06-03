@@ -27,8 +27,8 @@ public class Order {
         CANCELLED
     }
 
-    public static enum PaymentMethod {
-        CASH, CARD, VNPAY
+    public enum PaymentMethod {
+        CASH, CARD, VNPAY, WALLET, DEBT 
     }
 
     @Id

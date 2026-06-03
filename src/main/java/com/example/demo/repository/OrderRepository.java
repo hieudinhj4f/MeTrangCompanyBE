@@ -29,7 +29,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     @Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.items i LEFT JOIN FETCH i.product LEFT JOIN FETCH o.customer LEFT JOIN FETCH o.warehouse WHERE o.id = :id")
     Optional<Order> findByIdWithDetails(@Param("id") UUID id);
 
-    // 💡 Câu lệnh lấy tổng doanh thu gom nhóm theo từng ngày trong khoảng thời gian chọn
+
     @Query(value = "SELECT CAST(order_date AS DATE) as date_label, SUM(total_amount) as total_revenue " +
                    "FROM orders " +
                    "WHERE order_date BETWEEN :startDate AND :endDate " +
@@ -37,10 +37,6 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
                    "ORDER BY date_label ASC", nativeQuery = true)
     List<Object[]> getRawDailyRevenue(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    // ==============================================================================
-    // CÁC HÀM PHỤC VỤ THỐNG KÊ (DASHBOARD API)
-    // ==============================================================================
-    // 2. Tổng doanh thu (Chỉ tính các đơn chưa bị hủy)
     @Query(value = "SELECT SUM(total_amount) FROM orders WHERE status != 'CANCELLED' AND order_date BETWEEN :startDate AND :endDate", nativeQuery = true)
     BigDecimal getTotalRevenue(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 

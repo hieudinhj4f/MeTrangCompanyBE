@@ -9,4 +9,5 @@ public class OrderRequest {
     private UUID customerId;
     private Integer warehouseId;
     private List<OrderItemRequest> items;
+    private String paymentMethod;
 }

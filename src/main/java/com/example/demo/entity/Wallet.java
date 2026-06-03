@@ -9,18 +9,19 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "wallets")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Wallet {
 
     @Id
-    private UUID id; 
+    private UUID id;
 
-    @OneToOne(fetch = FetchType.EAGER)
-    @MapsId 
-    @JoinColumn(name = "id") 
+    @OneToOne(fetch = FetchType.LAZY)
+    @MapsId
+    @JoinColumn(name = "id")
     private Customer customer;
 
     @Builder.Default

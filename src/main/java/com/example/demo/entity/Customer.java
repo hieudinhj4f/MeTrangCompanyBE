@@ -7,13 +7,22 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "customers")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Customer {
 
+    public enum CustomerType{
+        RETAIL,
+        WORKER,
+        ENTERPRISE
+    }
+
+    
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "full_name", nullable = false)
@@ -32,7 +41,23 @@ public class Customer {
     @JoinColumn(name = "rank_id") 
     private Rank rank;
 
+    @Column(name = "company_name")
+    private String companyName;
+
+    @Column(name = "tax_code", unique = true)
+    private String taxCode; 
+
+    @Column(name = "billing_address")
+    private String billingAddress;
+
+    @Column(name = "customer_type", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private CustomerType customerType;
+
     public BigDecimal getTotalSpent() {
         return totalSpent == null ? BigDecimal.ZERO : totalSpent;
     }
+
+    @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL)
+    private Wallet wallet;
 }

@@ -1,6 +1,5 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.response.RevenueChartDto;
 import com.example.demo.service.StatisticService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -12,7 +11,6 @@ import com.example.demo.dto.response.OperationDashboardResponse;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/statistics")

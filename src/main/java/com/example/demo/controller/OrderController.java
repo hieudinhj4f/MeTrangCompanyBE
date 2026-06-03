@@ -31,7 +31,10 @@ public class OrderController {
             Order order = orderService.placeOrder(
                     customerId,
                     request.getWarehouseId(),
-                    request.getItems());
+                    request.getItems(),
+                    Order.PaymentMethod.valueOf(request.getPaymentMethod())
+            );
+
             return ResponseEntity.ok(Map.of(
                     "status", "Thành công",
                     "orderId", order.getId(),

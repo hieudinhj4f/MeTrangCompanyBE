@@ -2,7 +2,6 @@ package com.example.demo.dto.request;
 
 import com.example.demo.entity.User.Role;
 import lombok.Data;
-import java.util.UUID;
 
 @Data
 public class UserRequest {
