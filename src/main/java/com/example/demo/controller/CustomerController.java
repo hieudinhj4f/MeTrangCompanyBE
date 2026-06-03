@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.response.CustomerProfileResponse;
+import com.example.demo.entity.Customer;
 import com.example.demo.security.JwtAuthFilter;
 import com.example.demo.service.CustomerService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,8 +9,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Optional;
+
 
 @RestController
 @RequestMapping("/api/customers")
@@ -39,6 +43,56 @@ public class CustomerController {
                         "reason", "Không tìm thấy khách hàng với ID: " + id)));
     }
 
+
+    // =========================================================================
+    // 2. API QUẢN LÝ ĐỐI TÁC B2B (DÀNH CHO ADMIN / QUẢN LÝ)
+    // =========================================================================
+
+    @GetMapping("/b2b")
+    public ResponseEntity<?> getEnterprisePartners(HttpServletRequest request) {
+        try {
+            assertAdminAccess(request); // Chặn khách thường truy cập
+            List<Customer> partners = customerService.getAllEnterprisePartners();
+            return ResponseEntity.ok(partners);
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(Map.of("reason", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/b2b")
+    public ResponseEntity<?> createEnterprisePartner(@RequestBody Customer requestData, HttpServletRequest request) {
+        try {
+            assertAdminAccess(request); // Phân quyền bảo mật
+            Customer saved = customerService.createEnterprisePartner(requestData);
+            return ResponseEntity.ok(saved);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("reason", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("reason", "Lỗi máy chủ: " + e.getMessage()));
+        }
+    }
+
+    @PutMapping("/b2b/{id}")
+    public ResponseEntity<?> updateEnterprisePartner(
+            @PathVariable UUID id,
+            @RequestBody Customer updateData,
+            HttpServletRequest request) {
+        try {
+            assertAdminAccess(request); // Phân quyền bảo mật
+            Customer updated = customerService.updateEnterprisePartner(id, updateData);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("reason", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("reason", "Lỗi xử lý: " + e.getMessage()));
+        }
+    }
+
+
+    // =========================================================================
+    // 3. CÁC HÀM BẢO MẬT & TIỆN ÍCH (HELPER METHODS)
+    // =========================================================================
+
     private UUID resolveCustomerId(HttpServletRequest request) {
         UUID authCustomerId = (UUID) request.getAttribute(JwtAuthFilter.ATTR_CUSTOMER_ID);
         if (authCustomerId != null) {
@@ -65,5 +119,14 @@ public class CustomerController {
             return;
         }
         throw new RuntimeException("Không có quyền xem hồ sơ này");
+    }
+
+    // Hàm check quyền truy cập dành riêng cho luồng quản lý B2B
+    private void assertAdminAccess(HttpServletRequest request) {
+        String role = (String) request.getAttribute(JwtAuthFilter.ATTR_ROLE);
+        // Nếu role không phải ADMIN (có thể thêm MANAGER nếu dự án bạn có), thì chặn luôn
+        if (!"ADMIN".equals(role)) {
+            throw new RuntimeException("Truy cập bị từ chối! Chỉ Quản trị viên mới được thao tác Hồ sơ B2B.");
+        }
     }
 }
