@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,23 @@ public class CustomerController {
                         "reason", "Không tìm thấy khách hàng với ID: " + id)));
     }
 
-
+    @GetMapping("/search")
+    public ResponseEntity<?> searchCustomerByKeyword(
+            @RequestParam String keyword, 
+            HttpServletRequest request) {
+        try {
+            // Ở màn hình POS, thu ngân hoặc Admin đều có thể tìm kiếm
+            // Bạn có thể thêm hàm assertAdminOrManagerAccess(request) ở đây nếu cần bảo mật khắt khe
+            
+            Customer customer = customerService.searchCustomerForPOS(keyword);
+            return ResponseEntity.ok(customer);
+        } catch (IllegalArgumentException e) {
+            // Trả về 404 để Frontend biết là không tìm thấy và báo lỗi nhẹ nhàng
+            return ResponseEntity.status(404).body(Map.of("reason", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("reason", "Lỗi xử lý hệ thống"));
+        }
+    }
     // =========================================================================
     // 2. API QUẢN LÝ ĐỐI TÁC B2B (DÀNH CHO ADMIN / QUẢN LÝ)
     // =========================================================================
@@ -89,6 +106,11 @@ public class CustomerController {
     }
 
 
+    /**
+     * Tìm kiếm khách hàng đa kênh (Dùng cho màn hình POS)
+     * Ưu tiên tìm theo Số điện thoại trước, nếu không có thì tìm theo Mã số thuế.
+     */
+    
     // =========================================================================
     // 3. CÁC HÀM BẢO MẬT & TIỆN ÍCH (HELPER METHODS)
     // =========================================================================
@@ -128,5 +150,8 @@ public class CustomerController {
         if (!"ADMIN".equals(role)) {
             throw new RuntimeException("Truy cập bị từ chối! Chỉ Quản trị viên mới được thao tác Hồ sơ B2B.");
         }
+
+        
     }
+    
 }

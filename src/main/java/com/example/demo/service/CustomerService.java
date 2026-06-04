@@ -128,6 +128,30 @@ public Customer ensureCustomerForUser(User user) {
 
         return customerRepository.save(enterpriseCustomer);
     }
+    
+    @Transactional(readOnly = true)
+    public Customer searchCustomerForPOS(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw new IllegalArgumentException("Từ khóa tìm kiếm không được để trống!");
+        }
+        
+        String cleanKeyword = keyword.trim();
+        
+        // 1. Tìm theo Số điện thoại
+        Optional<Customer> byPhone = customerRepository.findByPhoneNumber(cleanKeyword);
+        if (byPhone.isPresent()) {
+            return byPhone.get();
+        }
+        
+        // 2. Nếu không thấy, tìm tiếp theo Mã số thuế (B2B)
+        Optional<Customer> byTaxCode = customerRepository.findByTaxCode(cleanKeyword);
+        if (byTaxCode.isPresent()) {
+            return byTaxCode.get();
+        }
+        
+        throw new IllegalArgumentException("Không tìm thấy hồ sơ khách hàng nào khớp với: " + cleanKeyword);
+    }
+
 
     @Transactional
     public Customer updateEnterprisePartner(UUID id, Customer updateData) {
