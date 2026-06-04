@@ -17,9 +17,11 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
     Optional<Customer> findByPhoneNumber(String phoneNumber);
 
     Optional<Customer> findByFullName(String fullName);
-    
+
     Optional<Customer> findByTaxCode(String taxCode);
 
     // 2. Lấy danh sách khách hàng theo phân loại (RETAIL, WORKER, ENTERPRISE)
     List<Customer> findByCustomerType(Customer.CustomerType customerType);
+
+    
 }

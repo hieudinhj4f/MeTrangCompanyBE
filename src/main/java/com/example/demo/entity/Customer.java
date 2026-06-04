@@ -20,7 +20,6 @@ public class Customer {
         ENTERPRISE
     }
 
-    
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -53,6 +52,10 @@ public class Customer {
     @Column(name = "customer_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private CustomerType customerType;
+
+    @Column(name = "credit_limit", columnDefinition = "numeric(38,2) default 0")
+    private BigDecimal creditLimit;
+
 
     public BigDecimal getTotalSpent() {
         return totalSpent == null ? BigDecimal.ZERO : totalSpent;

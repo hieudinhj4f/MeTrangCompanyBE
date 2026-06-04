@@ -123,6 +123,7 @@ public Customer ensureCustomerForUser(User user) {
                 .taxCode(dto.getTaxCode().trim())
                 .billingAddress(dto.getBillingAddress())
                 .totalSpent(BigDecimal.ZERO)
+                .creditLimit(new BigDecimal("50000000"))
                 .build();
 
         return customerRepository.save(enterpriseCustomer);

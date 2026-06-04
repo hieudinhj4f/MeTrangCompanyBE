@@ -29,13 +29,13 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     @Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.items i LEFT JOIN FETCH i.product LEFT JOIN FETCH o.customer LEFT JOIN FETCH o.warehouse WHERE o.id = :id")
     Optional<Order> findByIdWithDetails(@Param("id") UUID id);
 
-
     @Query(value = "SELECT CAST(order_date AS DATE) as date_label, SUM(total_amount) as total_revenue " +
-                   "FROM orders " +
-                   "WHERE order_date BETWEEN :startDate AND :endDate " +
-                   "GROUP BY CAST(order_date AS DATE) " +
-                   "ORDER BY date_label ASC", nativeQuery = true)
-    List<Object[]> getRawDailyRevenue(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+            "FROM orders " +
+            "WHERE order_date BETWEEN :startDate AND :endDate " +
+            "GROUP BY CAST(order_date AS DATE) " +
+            "ORDER BY date_label ASC", nativeQuery = true)
+    List<Object[]> getRawDailyRevenue(@Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
 
     @Query(value = "SELECT SUM(total_amount) FROM orders WHERE status != 'CANCELLED' AND order_date BETWEEN :startDate AND :endDate", nativeQuery = true)
     BigDecimal getTotalRevenue(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
@@ -50,9 +50,14 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     // 5. Biểu đồ Giờ cao điểm (Peak Hours cho Tab Vận hành)
     @Query(value = "SELECT TO_CHAR(order_date, 'HH24:00') as hour_label, COUNT(id) as total_orders " +
-                   "FROM orders " +
-                   "WHERE order_date BETWEEN :startDate AND :endDate " +
-                   "GROUP BY TO_CHAR(order_date, 'HH24:00') " +
-                   "ORDER BY hour_label ASC", nativeQuery = true)
-    List<Object[]> getPeakHoursData(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+            "FROM orders " +
+            "WHERE order_date BETWEEN :startDate AND :endDate " +
+            "GROUP BY TO_CHAR(order_date, 'HH24:00') " +
+            "ORDER BY hour_label ASC", nativeQuery = true)
+    List<Object[]> getPeakHoursData(@Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    // Tính tổng số tiền khách hàng đang nợ (Mua bằng DEBT nhưng chưa PAID)
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o WHERE o.customer.id = :customerId AND o.paymentMethod = 'DEBT' AND o.status != 'PAID' AND o.status != 'CANCELLED'")
+    BigDecimal sumUnpaidDebtByCustomer(@Param("customerId") UUID customerId);
 }

@@ -4,7 +4,6 @@ import com.example.demo.entity.*;
 import com.example.demo.repository.*;
 import com.example.demo.dto.request.OrderItemRequest;
 import com.example.demo.dto.response.OrderResponse;
-import com.example.demo.entity.Customer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -139,11 +138,21 @@ public class OrderService {
         } 
         else if (paymentMethod == Order.PaymentMethod.DEBT) {
             if (customerType != Customer.CustomerType.ENTERPRISE) {
-                throw new RuntimeException("Chỉ khách hàng Doanh nghiệp mới được ghi nhận công nợ!");
+                throw new IllegalArgumentException("Chỉ khách hàng Doanh nghiệp mới được ghi nhận công nợ!");
             }
-            // Trạng thái đơn nợ sẽ là PROCESSING hoặc UNPAID tùy bạn định nghĩa
+            
+
+            BigDecimal currentDebt = orderRepository.sumUnpaidDebtByCustomer(resolvedCustomerId);
+            BigDecimal limit = customer.getCreditLimit() != null ? customer.getCreditLimit() : BigDecimal.ZERO;
+            BigDecimal projectedDebt = currentDebt.add(finalAmount); // Nợ cũ + Đơn mới
+            
+            if (projectedDebt.compareTo(limit) > 0) {
+                throw new IllegalArgumentException("Từ chối giao dịch! Vượt Hạn mức công nợ. (Nợ hiện tại: " 
+                        + currentDebt.longValue() + "đ, Hạn mức: " + limit.longValue() + "đ)");
+            }
+
             order.setStatus(Order.OrderStatus.PROCESSING); 
-        } 
+        }
         else { // CASH hoặc Chuyển khoản QR
             order.setStatus(Order.OrderStatus.PAID);
         }
