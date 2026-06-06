@@ -87,8 +87,11 @@ public class ProductService {
                 .name(request.getName().trim())
                 .sku(request.getSku().trim())
                 .basePrice(request.getBasePrice() != null ? request.getBasePrice() : BigDecimal.ZERO)
+                .salePrice(request.getSalePrice() != null ? request.getSalePrice() : BigDecimal.ZERO)
                 .isIngredient(ingredient)
                 .active(request.getActive() != null ? request.getActive() : true)
+                .category(request.getCategoryId() != null ? categoryRepository.findById(request.getCategoryId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục với ID: " + request.getCategoryId())) : null)
                 .isBestSeller(false)
                 .imageUrl(request.getImageUrl() != null ? request.getImageUrl().trim() : null)
                 .build();
