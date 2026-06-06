@@ -4,6 +4,7 @@ import com.example.demo.dto.request.QuickAddProductRequest;
 import com.example.demo.dto.request.ProductRequest;
 import com.example.demo.dto.response.ProductResponse;
 import com.example.demo.entity.Product;
+import com.example.demo.entity.ProductPrice;
 import com.example.demo.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -91,6 +92,24 @@ public class ProductController {
                 "status", "Lỗi",
                 "reason", e.getMessage()
             ));
+        }
+    }
+    @PostMapping("/{id}/prices")
+    public ResponseEntity<?> configureProductPrice(
+            @PathVariable Long id, 
+            @RequestBody com.example.demo.dto.request.PriceConfigRequest request) {
+        try {
+            // (Nếu cần, thêm assertAdminAccess() ở đây để chặn nhân viên sửa giá)
+            ProductPrice savedPrice = productService.addPriceConfiguration(id, request);
+            return ResponseEntity.ok(Map.of(
+                    "status", "Thành công",
+                    "message", "Đã thiết lập cấu hình giá mới!",
+                    "data", savedPrice
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("status", "Lỗi", "reason", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "Lỗi", "reason", e.getMessage()));
         }
     }
 }

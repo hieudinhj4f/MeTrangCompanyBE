@@ -3,15 +3,19 @@ package com.example.demo.service;
 import com.example.demo.dto.request.QuickAddProductRequest;
 import com.example.demo.dto.response.ProductResponse;
 import com.example.demo.entity.Product;
+import com.example.demo.entity.ProductPrice;
 import com.example.demo.repository.ProductRepository;
+import com.example.demo.dto.request.PriceConfigRequest;
 import com.example.demo.dto.request.ProductRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.entity.Category;
 import com.example.demo.repository.CategoryRepository;
+import com.example.demo.repository.ProductPriceRepository;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -20,6 +24,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductPriceRepository productPriceRepository;
     @Transactional(readOnly = true)
     public List<ProductResponse> getAllProductResponses() {
         return productRepository.findAll().stream()
@@ -157,11 +162,29 @@ public class ProductService {
         if (request.getImageUrl() != null && !request.getImageUrl().isEmpty()) {
             product.setImageUrl(request.getImageUrl());
         }
-
-        // Nếu DTO của bạn có thêm trường discountPrice thì bổ sung vào đây:
-        // product.setDiscountPrice(request.getDiscountPrice());
-
-        // 4. Lưu đè xuống DB
+    
         return productRepository.save(product);
     }
+    @Transactional
+    public ProductPrice addPriceConfiguration(Long productId, PriceConfigRequest request) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+
+        // Validate logic nghiệp vụ
+        if ("EVENT".equals(request.getPriceType()) && request.getEndDate() == null) {
+            throw new IllegalArgumentException("Giá sự kiện bắt buộc phải có Ngày kết thúc (endDate)!");
+        }
+
+        ProductPrice newPrice = ProductPrice.builder()
+                .product(product)
+                .price(request.getPrice())
+                .priceType(request.getPriceType())
+                .startDate(request.getStartDate() != null ? request.getStartDate() : LocalDateTime.now())
+                .endDate(request.getEndDate())
+                .description(request.getDescription())
+                .build();
+
+        return productPriceRepository.save(newPrice);
+    }
+
 }

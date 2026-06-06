@@ -39,9 +39,6 @@ public class ProductPrice {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 //??
-    @Column(name = "is_ingredient")
-    private Boolean isIngredient = false;
-
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
