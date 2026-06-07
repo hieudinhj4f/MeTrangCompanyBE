@@ -184,7 +184,20 @@ public class ProductService {
                 .description(request.getDescription())
                 .build();
 
-        return productPriceRepository.save(newPrice);
+        ProductPrice savedPrice = productPriceRepository.save(newPrice);
+
+        if ("REGULAR".equals(request.getPriceType())) {
+            // Nếu là thiết lập giá thường -> Cập nhật base_price
+            product.setBasePrice(request.getPrice());
+        } else if ("EVENT".equals(request.getPriceType())) {
+            // Nếu là thiết lập sự kiện -> Cập nhật sale_price
+            product.setSalePrice(request.getPrice());
+        }
+        productRepository.save(product); 
+
+        return savedPrice;
+
+        
     }
 
 }
