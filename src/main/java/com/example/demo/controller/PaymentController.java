@@ -20,14 +20,16 @@ public class PaymentController {
     public ResponseEntity<?> deposit(
             @RequestParam(required = false) UUID customerId,
             @RequestParam(required = false) UUID userId,
-            @RequestParam BigDecimal amount) {
+            @RequestParam BigDecimal amount,
+            jakarta.servlet.http.HttpServletRequest request) {
         
         try {
             UUID targetId = customerId != null ? customerId : userId;
             if (targetId == null) {
                 throw new IllegalArgumentException("Thiếu customerId hoặc userId");
             }
-            var wallet = walletService.depositMoney(targetId, amount);
+            UUID performedBy = (UUID) request.getAttribute(com.example.demo.security.JwtAuthFilter.ATTR_USER_ID);
+            var wallet = walletService.depositMoney(targetId, amount, performedBy);
             
             return ResponseEntity.ok(Map.of(
                 "status", "Thành công",

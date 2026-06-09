@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "transaction_history")
@@ -32,6 +33,9 @@ public class TransactionHistory {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt; 
+
+    @Column(name = "performed_by")
+    private UUID performedBy;
 
     @PrePersist
     protected void onCreate() {

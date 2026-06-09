@@ -62,12 +62,13 @@ public class WalletController {
         try {
             UUID customerOrUserId = resolveTargetId(body, request);
             BigDecimal amount = new BigDecimal(body.get("amount"));
+            UUID performedBy = (UUID) request.getAttribute(JwtAuthFilter.ATTR_USER_ID);
 
             if (amount.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new IllegalArgumentException("Số tiền nạp phải lớn hơn 0");
             }
 
-            Wallet updatedWallet = walletService.depositMoney(customerOrUserId, amount);
+            Wallet updatedWallet = walletService.depositMoney(customerOrUserId, amount, performedBy);
 
             return ResponseEntity.ok(Map.of(
                     "status", "Nạp tiền thành công",

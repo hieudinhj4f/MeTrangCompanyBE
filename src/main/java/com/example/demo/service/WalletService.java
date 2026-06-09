@@ -19,7 +19,7 @@ public class WalletService {
     private final CustomerService customerService;
 
     @Transactional
-    public Wallet depositMoney(UUID customerOrUserId, BigDecimal amount) {
+    public Wallet depositMoney(UUID customerOrUserId, BigDecimal amount, UUID performedBy) {
         Customer customer = customerService.resolveOrCreateCustomer(customerOrUserId);
 
         Wallet wallet = walletRepository.findByCustomerId(customer.getId())
@@ -37,6 +37,7 @@ public class WalletService {
                 .type("DEPOSIT")
                 .description("Nạp tiền vào ví")
                 .createdAt(LocalDateTime.now())
+                .performedBy(performedBy)
                 .build());
 
         return saved;

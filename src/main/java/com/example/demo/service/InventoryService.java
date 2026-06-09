@@ -21,9 +21,6 @@ public class InventoryService {
     private final WarehouseRepository warehouseRepository;
     private final ProductRepository productRepository;
 
-    /**
-     * Điều chỉnh số lượng kho thủ công (Nhập/Xuất)
-     */
     @Transactional
     public Inventories adjustStock(InventoryId id, int adjustment) {
         Inventories inventory = inventoryRepository.findById(id)
@@ -39,19 +36,13 @@ public class InventoryService {
         return inventoryRepository.save(inventory);
     }
 
-    /**
-     * 💡 HÀM ĐÃ ĐƯỢC TỐI ƯU HÓA: Tự động khởi tạo tồn kho nếu sản phẩm mới tinh chưa có bản ghi
-     */
     @Transactional
     public void addStock(Integer warehouseId, Long productId, Integer amount) {
-        // 1. Khởi tạo khóa chính phức hợp (Ép kiểu từ Long sang Integer nếu class InventoryId của bạn dùng Integer)
+
         InventoryId invId = new InventoryId(warehouseId.intValue(), productId);
-        
-        // 2. Tìm kiếm bản ghi tồn kho dựa trên cặp khóa chính phức hợp
         Inventories inventory = inventoryRepository.findById(invId).orElse(null);
         
         if (inventory != null) {
-            // 🔄 TÌNH HUỐNG 1: Sản phẩm đã từng lưu kho -> Dùng hàm tăng số lượng nguyên bản của Hiếu
             inventory.increaseStock(amount); 
             inventoryRepository.save(inventory);
         } else {

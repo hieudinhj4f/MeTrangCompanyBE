@@ -39,7 +39,7 @@ public class User {
     private Boolean isActive = true;
 
     public enum Role {
-        ADMIN, DISPATCHER, WAREHOUSE_KEEPER, CUSTOMER, STAFF
+        ADMIN, DISPATCHER, WAREHOUSE_KEEPER, CUSTOMER, STAFF, ENTERPRISE
     }
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
