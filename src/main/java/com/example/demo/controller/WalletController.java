@@ -110,6 +110,54 @@ public class WalletController {
         }
     }
 
+    @PostMapping("/topup/bulk")
+    public ResponseEntity<?> topUpBulk(
+            @RequestBody Map<String, Object> body,
+            HttpServletRequest request) {
+        try {
+            List<String> idStrings = (List<String>) body.get("userIds");
+            if (idStrings == null || idStrings.isEmpty()) {
+                throw new IllegalArgumentException("Danh sách người nhận trống");
+            }
+            List<UUID> targetIds = idStrings.stream().map(UUID::fromString).toList();
+            BigDecimal amount = new BigDecimal(body.get("amount").toString());
+            UUID performedBy = (UUID) request.getAttribute(JwtAuthFilter.ATTR_USER_ID);
+
+            if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Số tiền nạp phải lớn hơn 0");
+            }
+
+            List<Wallet> updatedWallets = walletService.depositMoneyBulk(targetIds, amount, performedBy);
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "Thành công",
+                    "message", "Nạp tiền hàng loạt hoàn tất",
+                    "totalProcessed", updatedWallets.size()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Thất bại",
+                    "reason", e.getMessage()
+            ));
+        }
+    }
+
+    @GetMapping("/history/enterprise")
+    public ResponseEntity<?> getEnterpriseHistory(HttpServletRequest request) {
+        try {
+            UUID performedBy = (UUID) request.getAttribute(JwtAuthFilter.ATTR_USER_ID);
+            if (performedBy == null) throw new RuntimeException("Không tìm thấy thông tin định danh");
+            List<TransactionHistory> history = walletService.getHistoryByPerformedBy(performedBy);
+            return ResponseEntity.ok(Map.of(
+                    "status", "Thành công",
+                    "totalTransactions", history.size(),
+                    "data", history
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("status", "Thất bại", "reason", e.getMessage()));
+        }
+    }
+
     private UUID requireCustomerId(HttpServletRequest request) {
         UUID authCustomerId = (UUID) request.getAttribute(JwtAuthFilter.ATTR_CUSTOMER_ID);
         if (authCustomerId == null) {

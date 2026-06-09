@@ -55,4 +55,15 @@ public class WalletService {
         // 2. Gọi Repository theo đúng tên hàm bạn đã định nghĩa trong ảnh
         return transactionRepository.findByWalletOrderByCreatedAtDesc(wallet);
     }
+
+    public List<TransactionHistory> getHistoryByPerformedBy(UUID performedBy) {
+        return transactionRepository.findByPerformedByOrderByCreatedAtDesc(performedBy);
+    }
+
+    @Transactional
+    public List<Wallet> depositMoneyBulk(List<UUID> customerOrUserIds, BigDecimal amount, UUID performedBy) {
+        return customerOrUserIds.stream()
+                .map(id -> depositMoney(id, amount, performedBy))
+                .toList();
+    }
 }
