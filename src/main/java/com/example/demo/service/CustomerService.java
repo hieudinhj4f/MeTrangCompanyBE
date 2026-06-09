@@ -39,11 +39,11 @@ public Customer ensureCustomerForUser(User user) {
     }
 
     Customer customer = Customer.builder()
-            .id(user.getId()) 
             .fullName(user.getFullName() != null ? user.getFullName() : user.getUsername())
             .email(user.getEmail())
             .phoneNumber(user.getPhone())
             .totalSpent(BigDecimal.ZERO)
+            .customerType(CustomerType.RETAIL)
             .build();
             
     customer = customerRepository.saveAndFlush(customer);
@@ -61,16 +61,7 @@ public Customer ensureCustomerForUser(User user) {
         return customerRepository.findById(id)
                 .orElseGet(() -> userRepository.findById(id)
                         .map(this::ensureCustomerForUser)
-                        .orElseGet(() -> {
-                            Customer newCustomer = Customer.builder()
-                                    .id(id)
-                                    .fullName("Khách hàng mới")
-                                    .totalSpent(BigDecimal.ZERO)
-                                    .build();
-                            Customer saved = customerRepository.saveAndFlush(newCustomer);
-                            ensureWalletExists(saved);
-                            return saved;
-                        }));
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản hoặc khách hàng với ID cung cấp")));
     }
 
     private void ensureWalletExists(Customer customer) {
