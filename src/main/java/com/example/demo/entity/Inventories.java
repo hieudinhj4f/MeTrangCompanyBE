@@ -33,9 +33,6 @@ public class Inventories {
     @Column(nullable = false)
     private Integer quantity;
 
-    @Column(name = "expiry_date")
-    private LocalDate expiryDate;
-
     @Version
     @Column(nullable = false)
     private Integer version;

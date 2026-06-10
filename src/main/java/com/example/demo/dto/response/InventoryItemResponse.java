@@ -52,7 +52,6 @@ public class InventoryItemResponse {
                         .productId(inventory.getId().getProductId())
                         .build())
                 .quantity(inventory.getQuantity())
-                .expiryDate(inventory.getExpiryDate())
                 .product(p == null ? null : ProductSummary.builder()
                         .id(p.getId())
                         .sku(p.getSku())

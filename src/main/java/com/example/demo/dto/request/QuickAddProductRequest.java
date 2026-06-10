@@ -10,7 +10,6 @@ public class QuickAddProductRequest {
     private String sku;
     private String unit;
     private BigDecimal basePrice;
-    private BigDecimal salePrice;
     private Integer categoryId;
     private Boolean isIngredient;
     private Boolean active;

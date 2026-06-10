@@ -13,7 +13,6 @@ public class ProductRequest {
     private String name;
     private String sku;
     private Double basePrice;
-    private Double salePrice;
     private Boolean isIngredient;
     private Integer categoryId;
     private String description;

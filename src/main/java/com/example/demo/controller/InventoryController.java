@@ -20,13 +20,16 @@ public class InventoryController {
     private final InventoryRepository inventoryRepository;
 
     @PostMapping("/add-stock")
-    public ResponseEntity<?> addStock(@RequestBody Map<String, Integer> request) {
+    public ResponseEntity<?> addStock(@RequestBody Map<String, Object> request) {
         try {
-            Integer warehouseId = request.get("warehouseId");
-            Long productId = request.get("productId").longValue();
-            Integer amount = request.get("amount");
+            Integer warehouseId = request.get("warehouseId") != null ? Integer.valueOf(request.get("warehouseId").toString()) : null;
+            Long productId = request.get("productId") != null ? Long.valueOf(request.get("productId").toString()) : null;
+            Integer amount = request.get("amount") != null ? Integer.valueOf(request.get("amount").toString()) : null;
 
-            inventoryService.addStock(warehouseId, productId, amount);
+            String batchCode = request.get("batchCode") != null ? String.valueOf(request.get("batchCode")) : "TEMP-BATCH";
+            LocalDate expiryDate = request.get("expiryDate") != null ? LocalDate.parse(String.valueOf(request.get("expiryDate"))) : LocalDate.now().plusMonths(6);
+
+            inventoryService.addStockWithBatch(warehouseId, productId, amount, batchCode, expiryDate);
 
             return ResponseEntity.ok(Map.of(
                     "status", "Thành công",
@@ -69,16 +72,23 @@ public class InventoryController {
      * 4. Cảnh báo thuốc sắp hết hạn (Trong vòng X ngày tới)
      * API: /expired-alerts?days=30
      */
+    private final com.example.demo.repository.BatchRepository batchRepository;
+
     @GetMapping("/expired-alerts")
     public ResponseEntity<?> getExpiredAlerts(@RequestParam(defaultValue = "30") Integer days) {
         LocalDate targetDate = LocalDate.now().plusDays(days);
-        List<InventoryItemResponse> expiredProducts = inventoryRepository.findExpiredProducts(targetDate).stream()
-                .map(InventoryItemResponse::from)
-                .toList();
+        List<com.example.demo.entity.Batch> expiredBatches = batchRepository.findExpiredBatches(targetDate);
+
+        var responseList = expiredBatches.stream().map(b -> Map.of(
+                "batchCode", b.getBatchCode(),
+                "productName", b.getProduct().getName(),
+                "quantity", b.getQuantity(),
+                "expiryDate", b.getExpiryDate()
+        )).toList();
 
         return ResponseEntity.ok(Map.of(
                 "checkDate", targetDate,
-                "totalExpiredCount", expiredProducts.size(),
-                "products", expiredProducts));
+                "totalExpiredCount", responseList.size(),
+                "batches", responseList));
     }
 }

@@ -114,6 +114,12 @@ public class WarehouseService {
             if (itemDto.getPrice() != null && itemDto.getPrice() > 0) {
                 entryItem.setPurchasePrice(java.math.BigDecimal.valueOf(itemDto.getPrice()));
             }
+            if (itemDto.getBatchCode() != null) {
+                entryItem.setBatchCode(itemDto.getBatchCode());
+            }
+            if (itemDto.getExpiryDate() != null) {
+                entryItem.setExpiryDate(itemDto.getExpiryDate());
+            }
 
             entryItems.add(entryItem);
             // ĐÃ XÓA dòng inventoryService.addStock ở đây để đảm bảo an toàn dữ liệu
@@ -137,7 +143,10 @@ public class WarehouseService {
 
         // BƯỚC QUYẾT ĐỊNH: Chỉ cộng số lượng vào kho khi Quản lý bấm nút Phê Duyệt
         for (StockEntryItem item : entry.getItems()) {
-            inventoryService.addStock(warehouseId, item.getProduct().getId(), item.getQuantity());
+            if (item.getBatchCode() == null || item.getExpiryDate() == null) {
+                throw new RuntimeException("Sản phẩm " + item.getProduct().getName() + " thiếu mã lô hoặc ngày hết hạn!");
+            }
+            inventoryService.addStockWithBatch(warehouseId, item.getProduct().getId(), item.getQuantity(), item.getBatchCode(), item.getExpiryDate());
         }
 
         // Đổi trạng thái phiếu thành Đã duyệt

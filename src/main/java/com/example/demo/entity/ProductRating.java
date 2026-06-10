@@ -14,30 +14,31 @@ public class ProductRating {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; 
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
-    private Product product; 
+    private Product product;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
     @Column(name = "rating_star", nullable = false)
-    private Integer rating; 
+    private Integer rating;
 
     @Column(columnDefinition = "TEXT")
-    private String comment; 
+    private String comment;
 
     @Column(columnDefinition = "TEXT")
-    private String review; 
+    private String review;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now(); 
+        this.createdAt = LocalDateTime.now();
     }
+
 }

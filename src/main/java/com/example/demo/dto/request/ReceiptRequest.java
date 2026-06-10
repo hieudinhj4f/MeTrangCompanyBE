@@ -34,5 +34,7 @@ public class ReceiptRequest {
         private Long productId; 
         private Integer quantity;
         private Double price; 
+        private String batchCode;
+        private java.time.LocalDate expiryDate;
     }
 }

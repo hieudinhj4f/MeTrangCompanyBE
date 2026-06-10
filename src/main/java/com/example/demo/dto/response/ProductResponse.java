@@ -19,7 +19,6 @@ public class ProductResponse {
     private String sku;
     private String name;
     private BigDecimal basePrice;
-    private BigDecimal salePrice;
     private String unit;
     private Boolean isIngredient;
     private Boolean active;
@@ -37,7 +36,6 @@ public class ProductResponse {
                 .sku(product.getSku())
                 .name(product.getName())
                 .basePrice(product.getBasePrice())
-                .salePrice(product.getSalePrice())
                 .unit(product.getUnit())
                 .isIngredient(product.getIsIngredient())
                 .active(product.getActive())

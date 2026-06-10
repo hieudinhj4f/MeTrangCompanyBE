@@ -27,9 +27,6 @@ public class Product {
     @Column(name = "base_price", nullable = false)
     private BigDecimal basePrice; 
 
-    @Column(name = "sale_price")
-    private BigDecimal salePrice; 
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     @JsonIgnoreProperties({"products", "handler", "hibernateLazyInitializer"})
@@ -50,11 +47,6 @@ public class Product {
 
     @Column(name = "image_url", length = 500)
     private String imageUrl;
-
-    public BigDecimal getEffectivePrice() {
-        return (salePrice != null && salePrice.compareTo(BigDecimal.ZERO) > 0) 
-               ? salePrice : basePrice; 
-    }
 
     @JsonProperty("unit")
     public String getUnit() {

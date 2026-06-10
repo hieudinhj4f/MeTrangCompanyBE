@@ -31,6 +31,7 @@ public class OrderService {
     private final WarehouseRepository warehouseRepository;
     private final ProductPriceRepository productPriceRepository;
     private final TransactionHistoryRepository transactionHistoryRepository;
+    private final ProductRepository productRepository;
 
     @Transactional
 
@@ -68,24 +69,14 @@ public class OrderService {
             if (req.getProductId() == null) throw new IllegalArgumentException("productId không hợp lệ");
             if (req.getQuantity() == null || req.getQuantity() <= 0) throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
             
-            InventoryId invId = new InventoryId(warehouseId, req.getProductId());
-            Inventories inventory = inventoryRepository.findById(invId)
-                    .orElseThrow(() -> new RuntimeException("Sản phẩm ID " + req.getProductId() + " không có trong kho này!"));
-
-            if (inventory.getQuantity() < req.getQuantity()) {
-                throw new RuntimeException("Kho không đủ hàng cho sản phẩm: " + inventory.getProduct().getName());
-            }
-
-            BigDecimal effectivePrice = productPriceRepository.findCurrentPrice(req.getProductId(), LocalDateTime.now())
-                    .map(ProductPrice::getPrice)
-                    .orElse(inventory.getProduct().getBasePrice());
-
-            inventory.decreaseStock(req.getQuantity());
-            inventoryRepository.save(inventory);
+            Product product = productRepository.findById(req.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Sản phẩm ID " + req.getProductId() + " không tồn tại!"));
+            
+            BigDecimal effectivePrice = product.getBasePrice();
 
             OrderItem item = OrderItem.builder()
                     .order(order)
-                    .product(inventory.getProduct())
+                    .product(product)
                     .quantity(req.getQuantity())
                     .priceAtPurchase(effectivePrice)
                     .build();
@@ -177,14 +168,8 @@ public class OrderService {
             throw new RuntimeException("Đơn hàng này đã được hủy trước đó!");
         }
 
-        // 1. Hoàn kho (Giữ nguyên logic của bạn)
-        for (OrderItem item : order.getItems()) {
-            InventoryId invId = new InventoryId(order.getWarehouse().getId(), item.getProduct().getId());
-            Inventories inventory = inventoryRepository.findById(invId)
-                    .orElseThrow(() -> new RuntimeException("Lỗi dữ liệu kho!"));
-            inventory.increaseStock(item.getQuantity());
-            inventoryRepository.save(inventory);
-        }
+        // 1. Hoàn kho (Bỏ logic này vì Option B không trừ kho khi bán)
+        // (Logic hoàn tiền ví giữ nguyên)
 
         // THAY ĐỔI 4: Chỉ hoàn tiền vào ví NẾU khách đã thanh toán bằng ví
         if (order.getPaymentMethod() == Order.PaymentMethod.WALLET) {

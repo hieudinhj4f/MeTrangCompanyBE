@@ -27,4 +27,10 @@ public class StockEntryItem {
     private Integer quantity; 
     @Column(name = "purchase_price")
     private BigDecimal purchasePrice; 
+
+    @Column(name = "batch_code", length = 50)
+    private String batchCode;
+
+    @Column(name = "expiry_date")
+    private java.time.LocalDate expiryDate;
 }

@@ -20,6 +20,7 @@ public class InventoryService {
     private final InventoryRepository inventoryRepository;
     private final WarehouseRepository warehouseRepository;
     private final ProductRepository productRepository;
+    private final com.example.demo.repository.BatchRepository batchRepository;
 
     @Transactional
     public Inventories adjustStock(InventoryId id, int adjustment) {
@@ -36,21 +37,35 @@ public class InventoryService {
         return inventoryRepository.save(inventory);
     }
 
-    @Transactional
-    public void addStock(Integer warehouseId, Long productId, Integer amount) {
 
-        InventoryId invId = new InventoryId(warehouseId.intValue(), productId);
+    @Transactional
+    public void addStockWithBatch(Integer warehouseId, Long productId, Integer amount, String batchCode, java.time.LocalDate expiryDate) {
+        if (amount == null || amount <= 0) {
+            throw new IllegalArgumentException("Số lượng nhập phải lớn hơn 0");
+        }
+
+        Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy kho!"));
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm!"));
+
+        // 1. Lưu lô hàng
+        com.example.demo.entity.Batch newBatch = com.example.demo.entity.Batch.builder()
+                .warehouse(warehouse)
+                .product(product)
+                .batchCode(batchCode)
+                .quantity(amount)
+                .expiryDate(expiryDate)
+                .build();
+        batchRepository.save(newBatch);
+
+        // 2. Cập nhật Inventories
+        InventoryId invId = new InventoryId(warehouseId, productId);
         Inventories inventory = inventoryRepository.findById(invId).orElse(null);
-        
         if (inventory != null) {
-            inventory.increaseStock(amount); 
+            inventory.increaseStock(amount);
             inventoryRepository.save(inventory);
         } else {
-            Warehouse warehouse = warehouseRepository.findById(warehouseId)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy kho với id: " + warehouseId));
-            Product product = productRepository.findById(productId)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với id: " + productId));
-
             Inventories newInventory = new Inventories();
             newInventory.setId(invId);
             newInventory.setWarehouse(warehouse);
@@ -58,6 +73,42 @@ public class InventoryService {
             newInventory.setQuantity(amount);
             inventoryRepository.save(newInventory);
         }
+    }
+
+    @Transactional
+    public void exportIngredient(Integer warehouseId, Long productId, int totalQuantityNeeded) {
+        if (totalQuantityNeeded <= 0) return;
+
+        InventoryId invId = new InventoryId(warehouseId, productId);
+        Inventories inventory = inventoryRepository.findById(invId)
+                .orElseThrow(() -> new RuntimeException("Nguyên liệu không có trong kho!"));
+
+        if (inventory.getQuantity() < totalQuantityNeeded) {
+            throw new RuntimeException("Kho không đủ số lượng nguyên liệu (Cần: " + totalQuantityNeeded + ", Còn: " + inventory.getQuantity() + ")");
+        }
+
+        // FEFO: Trừ theo lô hết hạn gần nhất
+        List<com.example.demo.entity.Batch> availableBatches = batchRepository.findAvailableBatchesOrderByExpiryAsc(warehouseId, productId);
+        
+        int remainingToDeduct = totalQuantityNeeded;
+        for (com.example.demo.entity.Batch batch : availableBatches) {
+            if (remainingToDeduct <= 0) break;
+
+            int deductAmount = Math.min(batch.getQuantity(), remainingToDeduct);
+            batch.decreaseQuantity(deductAmount);
+            batchRepository.save(batch);
+            
+            remainingToDeduct -= deductAmount;
+        }
+
+        if (remainingToDeduct > 0) {
+            // Lỗi logic (Database không nhất quán giữa Inventories và Batch)
+            throw new RuntimeException("Lỗi FEFO: Không đủ hàng trong các lô để xuất!");
+        }
+
+        // Cập nhật Inventories
+        inventory.decreaseStock(totalQuantityNeeded);
+        inventoryRepository.save(inventory);
     }
 
     public List<Inventories> getAllInventory() {

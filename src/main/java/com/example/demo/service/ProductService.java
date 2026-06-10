@@ -92,7 +92,6 @@ public class ProductService {
                 .name(request.getName().trim())
                 .sku(request.getSku().trim())
                 .basePrice(request.getBasePrice() != null ? request.getBasePrice() : BigDecimal.ZERO)
-                .salePrice(request.getSalePrice() != null ? request.getSalePrice() : BigDecimal.ZERO)
                 .isIngredient(ingredient)
                 .active(request.getActive() != null ? request.getActive() : true)
                 .category(request.getCategoryId() != null ? categoryRepository.findById(request.getCategoryId())
@@ -101,7 +100,19 @@ public class ProductService {
                 .imageUrl(request.getImageUrl() != null ? request.getImageUrl().trim() : null)
                 .build();
 
-        return saveProduct(product);
+        Product savedProduct = saveProduct(product);
+
+        // Lưu vết giá khởi tạo
+        ProductPrice initialPrice = ProductPrice.builder()
+                .product(savedProduct)
+                .price(savedProduct.getBasePrice())
+                .priceType("REGULAR")
+                .startDate(LocalDateTime.now())
+                .description("Khởi tạo giá sản phẩm")
+                .build();
+        productPriceRepository.save(initialPrice);
+
+        return savedProduct;
     }
 
     private boolean isIngredientUnit(String unit) {
@@ -134,13 +145,20 @@ public class ProductService {
     // 2. 💡 XỬ LÝ LỆCH KIỂU GIÁ TIỀN (Double -> BigDecimal)
     // Phải bọc BigDecimal.valueOf() và kiểm tra null để tránh lỗi NullPointerException
     if (request.getBasePrice() != null) {
-        product.setBasePrice(BigDecimal.valueOf(request.getBasePrice()));
-    }
-    if (request.getSalePrice() != null) {
-        product.setSalePrice(BigDecimal.valueOf(request.getSalePrice()));
-    } else {
-        // Nếu không có giá sale, có thể set null hoặc tự động set bằng 0 tùy logic của bạn
-        product.setSalePrice(BigDecimal.ZERO); 
+        BigDecimal newPrice = BigDecimal.valueOf(request.getBasePrice());
+        // So sánh giá cũ và mới
+        if (product.getBasePrice() == null || product.getBasePrice().compareTo(newPrice) != 0) {
+            product.setBasePrice(newPrice);
+            // Lưu vết lịch sử giá
+            ProductPrice priceHistory = ProductPrice.builder()
+                    .product(product)
+                    .price(newPrice)
+                    .priceType("REGULAR")
+                    .startDate(LocalDateTime.now())
+                    .description("Cập nhật giá sản phẩm")
+                    .build();
+            productPriceRepository.save(priceHistory);
+        }
     }
 
     // 3. 💡 XỬ LÝ LỆCH KIỂU DANH MỤC (Integer -> Đối tượng Category)
@@ -186,13 +204,8 @@ public class ProductService {
 
         ProductPrice savedPrice = productPriceRepository.save(newPrice);
 
-        if ("REGULAR".equals(request.getPriceType())) {
-            // Nếu là thiết lập giá thường -> Cập nhật base_price
-            product.setBasePrice(request.getPrice());
-        } else if ("EVENT".equals(request.getPriceType())) {
-            // Nếu là thiết lập sự kiện -> Cập nhật sale_price
-            product.setSalePrice(request.getPrice());
-        }
+        // Cập nhật base_price
+        product.setBasePrice(request.getPrice());
         productRepository.save(product); 
 
         return savedPrice;
