@@ -28,11 +28,19 @@ public class OrderController {
             HttpServletRequest httpRequest) {
         try {
             UUID customerId = resolveCustomerId(request, httpRequest);
+            Order.PaymentMethod paymentMethod = request.getPaymentMethod() != null ? 
+                    Order.PaymentMethod.valueOf(request.getPaymentMethod()) : Order.PaymentMethod.CASH;
+            Order.OrderType orderType = request.getOrderType() != null ? 
+                    Order.OrderType.valueOf(request.getOrderType()) : Order.OrderType.IN_STORE;
+                    
             Order order = orderService.placeOrder(
                     customerId,
                     request.getWarehouseId(),
                     request.getItems(),
-                    Order.PaymentMethod.valueOf(request.getPaymentMethod())
+                    paymentMethod,
+                    orderType,
+                    request.getDeliveryAddress(),
+                    request.getIsOnlineOrder()
             );
 
             return ResponseEntity.ok(Map.of(
@@ -104,6 +112,42 @@ public class OrderController {
             @PathVariable UUID orderId,
             @RequestBody UpdateOrderStatusRequest request) {
         return updateOrderStatus(orderId, request);
+    }
+
+    @PutMapping("/{orderId}/priority")
+    public ResponseEntity<?> updateOrderPriority(
+            @PathVariable UUID orderId,
+            @RequestParam(required = false) Boolean isPriority) {
+        try {
+            OrderResponse updated = orderService.updateOrderPriority(orderId, isPriority);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("reason", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/revenue/split")
+    public ResponseEntity<?> getRevenueByPaymentMethod(
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime startDate,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime endDate) {
+        try {
+            List<Object[]> data = orderService.getRevenueByPaymentMethod(startDate, endDate);
+            return ResponseEntity.ok(data);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("reason", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/kitchen-summary")
+    public ResponseEntity<?> getKitchenSummary(
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime startDate,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime endDate) {
+        try {
+            List<Map<String, Object>> summary = orderService.getKitchenSummary(startDate, endDate);
+            return ResponseEntity.ok(summary);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("reason", e.getMessage()));
+        }
     }
 
     private boolean isAuthenticated(HttpServletRequest httpRequest) {

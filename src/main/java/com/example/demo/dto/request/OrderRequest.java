@@ -10,4 +10,7 @@ public class OrderRequest {
     private Integer warehouseId;
     private List<OrderItemRequest> items;
     private String paymentMethod;
+    private String orderType;
+    private String deliveryAddress;
+    private Boolean isOnlineOrder = false;
 }

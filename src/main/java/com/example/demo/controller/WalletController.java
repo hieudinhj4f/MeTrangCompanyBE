@@ -42,10 +42,7 @@ public class WalletController {
                     "status", "Thành công",
                     "customerId", customerId,
                     "fullName", wallet.getCustomer().getFullName(),
-                    "balance", wallet.getBalance(),
-                    "rank", wallet.getCustomer().getRank() != null
-                            ? wallet.getCustomer().getRank().getRankName()
-                            : "Chưa có hạng"
+                    "balance", wallet.getBalance()
             ));
         } catch (RuntimeException e) {
             return ResponseEntity.status(404).body(Map.of(

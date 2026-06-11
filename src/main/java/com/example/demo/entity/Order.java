@@ -31,6 +31,10 @@ public class Order {
         CASH, CARD, VNPAY, WALLET, DEBT 
     }
 
+    public enum OrderType {
+        IN_STORE, DELIVERY, PRE_ORDER
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
@@ -57,6 +61,14 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_type")
+    @Builder.Default
+    private OrderType orderType = OrderType.IN_STORE;
+
+    @Column(name = "delivery_address")
+    private String deliveryAddress;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default 

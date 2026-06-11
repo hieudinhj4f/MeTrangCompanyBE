@@ -15,7 +15,9 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -27,7 +29,6 @@ public class OrderService {
     private final WalletRepository walletRepository;
     private final CustomerRepository customerRepository;
     private final CustomerService customerService;
-    private final RankRepository rankRepository;
     private final WarehouseRepository warehouseRepository;
     private final ProductPriceRepository productPriceRepository;
     private final TransactionHistoryRepository transactionHistoryRepository;
@@ -35,8 +36,8 @@ public class OrderService {
 
     @Transactional
 
-    public Order placeOrder(UUID customerId, Integer warehouseId, List<OrderItemRequest> itemRequests, Order.PaymentMethod paymentMethod) {
-        log.info("🚀 [BẮT ĐẦU ĐẶT HÀNG ĐA KÊNH] Customer: {}, Warehouse: {}, Payment: {}", customerId, warehouseId, paymentMethod);
+    public Order placeOrder(UUID customerId, Integer warehouseId, List<OrderItemRequest> itemRequests, Order.PaymentMethod paymentMethod, Order.OrderType orderType, String deliveryAddress, Boolean isOnlineOrder) {
+        log.info("🚀 [BẮT ĐẦU ĐẶT HÀNG ĐA KÊNH] Customer: {}, Warehouse: {}, Payment: {}, Type: {}", customerId, warehouseId, paymentMethod, orderType);
 
         if (customerId == null) throw new IllegalArgumentException("customerId không được để trống");
         if (warehouseId == null) throw new IllegalArgumentException("warehouseId không được để trống");
@@ -56,6 +57,8 @@ public class OrderService {
                 .customer(customer)
                 .warehouse(warehouse)
                 .paymentMethod(paymentMethod) 
+                .orderType(orderType != null ? orderType : Order.OrderType.IN_STORE)
+                .deliveryAddress(deliveryAddress)
                 .status(Order.OrderStatus.PENDING)
                 .totalAmount(BigDecimal.ZERO)
                 .orderDate(LocalDateTime.now())
@@ -72,6 +75,13 @@ public class OrderService {
             Product product = productRepository.findById(req.getProductId())
                     .orElseThrow(() -> new RuntimeException("Sản phẩm ID " + req.getProductId() + " không tồn tại!"));
             
+            // Tự động trừ kho
+            InventoryId invId = new InventoryId(warehouseId, product.getId());
+            Inventories inventory = inventoryRepository.findById(invId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy nguyên liệu trong kho cho sản phẩm: " + product.getName()));
+            inventory.decreaseStock(req.getQuantity());
+            inventoryRepository.save(inventory);
+
             BigDecimal effectivePrice = product.getBasePrice();
 
             OrderItem item = OrderItem.builder()
@@ -98,21 +108,36 @@ public class OrderService {
             finalAmount = finalAmount.subtract(new BigDecimal("5000")).max(BigDecimal.ZERO);
         } 
         else {
-            // Khách Vãng lai (RETAIL): Áp dụng chiết khấu theo hạng thẻ (Logic cũ)
-            BigDecimal discountRate = (customer.getRank() != null) ? customer.getRank().getDiscountRate() : BigDecimal.ZERO;
-            BigDecimal discountAmount = totalOriginalAmount.multiply(discountRate).divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
-            finalAmount = totalOriginalAmount.subtract(discountAmount);
+            // Khách Vãng lai (RETAIL): Mặc định không chiết khấu
+            finalAmount = totalOriginalAmount;
         }
 
         // THAY ĐỔI 3: PHÂN LUỒNG THANH TOÁN (Payment Routing)
         if (paymentMethod == Order.PaymentMethod.WALLET) {
-            // Chỉ trả ví thì mới check và trừ ví
             Wallet wallet = walletRepository.findByCustomerId(resolvedCustomerId)
                     .orElseThrow(() -> new RuntimeException("Khách hàng chưa kích hoạt ví điện tử!"));
             
-            if (wallet.getBalance().compareTo(finalAmount) < 0) {
-                throw new RuntimeException("Ví không đủ tiền! Cần: " + finalAmount);
+            // Tự động nạp tiền mặt phần còn thiếu nếu ví không đủ tiền
+            BigDecimal missingAmount = finalAmount.subtract(wallet.getBalance());
+            if (missingAmount.compareTo(BigDecimal.ZERO) > 0) {
+                if (Boolean.TRUE.equals(isOnlineOrder)) {
+                    throw new RuntimeException("Ví không đủ tiền! Vui lòng nạp thêm qua cổng thanh toán hoặc chọn phương thức Tiền mặt khi nhận hàng.");
+                }
+
+                // Nếu mua tại quầy -> Auto nạp bù bằng tiền mặt
+                wallet.setBalance(wallet.getBalance().add(missingAmount));
+                
+                TransactionHistory topupHistory = TransactionHistory.builder()
+                        .wallet(wallet)
+                        .amount(missingAmount)
+                        .type("CASH_TOPUP")
+                        .description("Khách nạp bù tiền mặt cho đơn hàng")
+                        .createdAt(LocalDateTime.now())
+                        .build();
+                transactionHistoryRepository.save(topupHistory);
             }
+
+            // Trừ tiền thanh toán từ ví
             wallet.setBalance(wallet.getBalance().subtract(finalAmount));
             walletRepository.save(wallet);
 
@@ -151,7 +176,6 @@ public class OrderService {
         // 6. Cập nhật thăng hạng (Áp dụng cho mọi đối tượng để kích cầu)
         BigDecimal newTotalSpent = (customer.getTotalSpent() != null ? customer.getTotalSpent() : BigDecimal.ZERO).add(finalAmount);
         customer.setTotalSpent(newTotalSpent);
-        updateCustomerRank(customer);
         customerRepository.save(customer);
 
         // 7. Hoàn tất lưu đơn hàng
@@ -168,8 +192,16 @@ public class OrderService {
             throw new RuntimeException("Đơn hàng này đã được hủy trước đó!");
         }
 
-        // 1. Hoàn kho (Bỏ logic này vì Option B không trừ kho khi bán)
-        // (Logic hoàn tiền ví giữ nguyên)
+        // Hoàn kho
+        if (order.getWarehouse() != null) {
+            for (OrderItem item : order.getItems()) {
+                InventoryId invId = new InventoryId(order.getWarehouse().getId(), item.getProduct().getId());
+                inventoryRepository.findById(invId).ifPresent(inventory -> {
+                    inventory.increaseStock(item.getQuantity());
+                    inventoryRepository.save(inventory);
+                });
+            }
+        }
 
         // THAY ĐỔI 4: Chỉ hoàn tiền vào ví NẾU khách đã thanh toán bằng ví
         if (order.getPaymentMethod() == Order.PaymentMethod.WALLET) {
@@ -193,16 +225,7 @@ public class OrderService {
         orderRepository.save(order);
     }
 
-    private void updateCustomerRank(Customer customer) {
-        List<Rank> allRanks = rankRepository.findAllByOrderByMinPointDesc();
-        int spentValue = customer.getTotalSpent().intValue();
-        for (Rank r : allRanks) {
-            if (spentValue >= r.getMinPoint()) {
-                customer.setRank(r);
-                break;
-            }
-        }
-    }
+
 
     @Transactional(readOnly = true)
     public List<OrderResponse> getAllOrders() {
@@ -240,5 +263,30 @@ public class OrderService {
 
         order.setStatus(targetStatus);
         return OrderResponse.from(orderRepository.save(order));
+    }
+
+    @Transactional
+    public OrderResponse updateOrderPriority(UUID orderId, Boolean isPriority) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng!"));
+        
+        order.setIsPriority(isPriority != null && isPriority);
+        return OrderResponse.from(orderRepository.save(order));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Object[]> getRevenueByPaymentMethod(LocalDateTime startDate, LocalDateTime endDate) {
+        return orderRepository.getRevenueByPaymentMethod(startDate, endDate);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getKitchenSummary(LocalDateTime startDate, LocalDateTime endDate) {
+        List<Object[]> rawData = orderRepository.getKitchenSummary(startDate, endDate);
+        return rawData.stream().map(row -> {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("productName", row[0]);
+            map.put("totalQuantity", row[1]);
+            return map;
+        }).collect(Collectors.toList());
     }
 }

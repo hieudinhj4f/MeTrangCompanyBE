@@ -15,8 +15,6 @@ public class CustomerProfileResponse {
     private String phoneNumber;
     private String email;
     private BigDecimal totalSpent;
-    private String rankName;
-    private BigDecimal discountRate;
 
     public static CustomerProfileResponse from(Customer customer) {
         return CustomerProfileResponse.builder()
@@ -25,8 +23,6 @@ public class CustomerProfileResponse {
                 .phoneNumber(customer.getPhoneNumber())
                 .email(customer.getEmail())
                 .totalSpent(customer.getTotalSpent())
-                .rankName(customer.getRank() != null ? customer.getRank().getRankName() : "Chưa có hạng")
-                .discountRate(customer.getRank() != null ? customer.getRank().getDiscountRate() : BigDecimal.ZERO)
                 .build();
     }
 }

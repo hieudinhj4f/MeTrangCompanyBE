@@ -60,4 +60,18 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     // Tính tổng số tiền khách hàng đang nợ (Mua bằng DEBT nhưng chưa PAID)
     @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o WHERE o.customer.id = :customerId AND o.paymentMethod = 'DEBT' AND o.status != 'PAID' AND o.status != 'CANCELLED'")
     BigDecimal sumUnpaidDebtByCustomer(@Param("customerId") UUID customerId);
+
+    // Báo cáo doanh thu theo hình thức thanh toán (Tiền mặt vs Vé ăn/Wallet)
+    @Query("SELECT o.paymentMethod, SUM(o.totalAmount) FROM Order o WHERE o.status != 'CANCELLED' AND o.orderDate BETWEEN :startDate AND :endDate GROUP BY o.paymentMethod")
+    List<Object[]> getRevenueByPaymentMethod(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+    // Báo cáo tổng hợp bếp (Gom đơn PRE_ORDER)
+    @Query("SELECT i.product.name, SUM(i.quantity) " +
+           "FROM OrderItem i " +
+           "WHERE i.order.orderType = 'PRE_ORDER' " +
+           "AND i.order.status != 'CANCELLED' " +
+           "AND i.order.orderDate BETWEEN :startDate AND :endDate " +
+           "GROUP BY i.product.name " +
+           "ORDER BY SUM(i.quantity) DESC")
+    List<Object[]> getKitchenSummary(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }

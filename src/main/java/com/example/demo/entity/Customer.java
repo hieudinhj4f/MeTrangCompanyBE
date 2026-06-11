@@ -36,9 +36,6 @@ public class Customer {
     @Column(name = "total_spent", nullable = false, columnDefinition = "numeric(38,2) default 0")
     private BigDecimal totalSpent;
 
-    @ManyToOne
-    @JoinColumn(name = "rank_id") 
-    private Rank rank;
 
     @Column(name = "company_name")
     private String companyName;

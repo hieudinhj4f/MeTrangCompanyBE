@@ -27,6 +27,8 @@ public class OrderResponse {
     private String customerName;
     private Integer warehouseId;
     private String warehouseName;
+    private String orderType;
+    private String deliveryAddress;
     private List<OrderItemResponse> items;
 
     @Data
@@ -55,6 +57,8 @@ public class OrderResponse {
                 .customerName(order.getCustomer() != null ? order.getCustomer().getFullName() : "Khách lẻ")
                 .warehouseId(order.getWarehouse() != null ? order.getWarehouse().getId() : null)
                 .warehouseName(order.getWarehouse() != null ? order.getWarehouse().getName() : null)
+                .orderType(order.getOrderType() != null ? order.getOrderType().name() : null)
+                .deliveryAddress(order.getDeliveryAddress())
                 .items(order.getItems() == null ? List.of() : order.getItems().stream()
                         .map(OrderResponse::fromItem)
                         .toList())
