@@ -10,6 +10,12 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime; 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 @Service
 @RequiredArgsConstructor
@@ -144,5 +150,53 @@ public class StatisticService {
         }
 
         return chartDataList;
+    }
+
+    // =========================================================
+    // TAB 1: TỔNG HỢP DỮ LIỆU TÀI CHÍNH (FINANCE DASHBOARD)
+    // =========================================================
+    public ByteArrayInputStream exportFinanceReportToExcel(LocalDateTime startDate, LocalDateTime endDate) {
+        List<RevenueChartDto> chartData = getRevenueChartData(startDate, endDate);
+
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Bao Cao Doanh Thu");
+
+            // Style cho Header
+            CellStyle headerStyle = workbook.createCellStyle();
+            headerStyle.setFillForegroundColor(IndexedColors.LIGHT_ORANGE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setColor(IndexedColors.WHITE.getIndex());
+            headerStyle.setFont(headerFont);
+
+            // Tạo Header Row
+            Row headerRow = sheet.createRow(0);
+            String[] columns = {"Ngày", "Doanh Thu (VNĐ)", "Lợi Nhuận Ước Tính (VNĐ)"};
+            for (int col = 0; col < columns.length; col++) {
+                Cell cell = headerRow.createCell(col);
+                cell.setCellValue(columns[col]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Đổ dữ liệu
+            int rowIdx = 1;
+            for (RevenueChartDto data : chartData) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(data.getDateLabel());
+                row.createCell(1).setCellValue(data.getTotalRevenue().doubleValue());
+                row.createCell(2).setCellValue(data.getGrossProfit().doubleValue());
+            }
+
+            // Auto-size columns
+            for (int i = 0; i < columns.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(out);
+            return new ByteArrayInputStream(out.toByteArray());
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi khi tạo file Excel báo cáo: " + e.getMessage());
+        }
     }
 }

@@ -26,6 +26,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final InventoryRepository inventoryRepository;
+    private final InventoryService inventoryService;
     private final WalletRepository walletRepository;
     private final CustomerRepository customerRepository;
     private final CustomerService customerService;
@@ -75,12 +76,8 @@ public class OrderService {
             Product product = productRepository.findById(req.getProductId())
                     .orElseThrow(() -> new RuntimeException("Sản phẩm ID " + req.getProductId() + " không tồn tại!"));
             
-            // Tự động trừ kho
-            InventoryId invId = new InventoryId(warehouseId, product.getId());
-            Inventories inventory = inventoryRepository.findById(invId)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy nguyên liệu trong kho cho sản phẩm: " + product.getName()));
-            inventory.decreaseStock(req.getQuantity());
-            inventoryRepository.save(inventory);
+            // Tự động trừ kho (có FEFO - trừ lô cũ nhất)
+            inventoryService.exportIngredient(warehouseId, product.getId(), req.getQuantity());
 
             BigDecimal effectivePrice = product.getBasePrice();
 
@@ -192,14 +189,16 @@ public class OrderService {
             throw new RuntimeException("Đơn hàng này đã được hủy trước đó!");
         }
 
-        // Hoàn kho
+        // Hoàn kho (với lô trả hàng)
         if (order.getWarehouse() != null) {
             for (OrderItem item : order.getItems()) {
-                InventoryId invId = new InventoryId(order.getWarehouse().getId(), item.getProduct().getId());
-                inventoryRepository.findById(invId).ifPresent(inventory -> {
-                    inventory.increaseStock(item.getQuantity());
-                    inventoryRepository.save(inventory);
-                });
+                inventoryService.addStockWithBatch(
+                    order.getWarehouse().getId(),
+                    item.getProduct().getId(),
+                    item.getQuantity(),
+                    "REFUND-" + order.getId().toString().substring(0, 8).toUpperCase(),
+                    LocalDateTime.now().plusMonths(6).toLocalDate()
+                );
             }
         }
 
