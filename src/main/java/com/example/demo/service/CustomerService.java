@@ -97,6 +97,9 @@ public Customer ensureCustomerForUser(User user) {
         if (dto.getTaxCode() == null || dto.getTaxCode().trim().isEmpty()) {
             throw new IllegalArgumentException("Mã số thuế không được để trống!");
         }
+        if (dto.getBillingAddress() == null || dto.getBillingAddress().trim().isEmpty()) {
+            throw new IllegalArgumentException("Địa chỉ xuất hóa đơn không được để trống!");
+        }
 
         // 2. Kiểm tra trùng lặp Mã số thuế
         Optional<Customer> existingTaxCode = customerRepository.findByTaxCode(dto.getTaxCode().trim());
@@ -159,6 +162,10 @@ public Customer ensureCustomerForUser(User user) {
                 throw new IllegalArgumentException("Mã số thuế mới bị trùng lặp với doanh nghiệp khác!");
             }
             existing.setTaxCode(updateData.getTaxCode());
+        }
+
+        if (updateData.getBillingAddress() == null || updateData.getBillingAddress().trim().isEmpty()) {
+            throw new IllegalArgumentException("Địa chỉ xuất hóa đơn không được để trống!");
         }
 
         existing.setCompanyName(updateData.getCompanyName());

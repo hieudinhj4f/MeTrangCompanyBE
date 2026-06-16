@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 public interface SupplierRepository extends JpaRepository<Supplier, Integer> {
     // Hiếu có thể thêm hàm tìm kiếm theo tên nếu cần
     boolean existsByName(String name);
+    java.util.Optional<Supplier> findByTaxCode(String taxCode);
 }

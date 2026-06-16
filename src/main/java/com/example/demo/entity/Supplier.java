@@ -31,7 +31,7 @@ public class Supplier {
     @Column(columnDefinition = "TEXT")
     private String address;
 
-    @Column(name = "tax_code", length = 20)
+    @Column(name = "tax_code", length = 20, unique = true)
     private String taxCode;
 
     @Column(name = "is_active")

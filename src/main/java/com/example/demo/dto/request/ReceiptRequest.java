@@ -18,6 +18,8 @@ public class ReceiptRequest {
     
     private String delivererName; 
     
+    private Integer supplierId;
+    
     private Integer warehouseId; 
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

@@ -26,7 +26,8 @@ public class WarehouseService {
     private final InventoryService inventoryService;
     private final StockEntryRepository stockEntryRepository;
     private final OrderRepository orderRepository;
-    private final ProductRepository productRepository; // Thêm repository này để truy vấn sản phẩm real
+    private final ProductRepository productRepository; 
+    private final com.example.demo.repository.SupplierRepository supplierRepository;
 
     public List<WarehouseResponse> getAllWarehouses() {
         return warehouseRepository.findAll().stream()
@@ -99,7 +100,13 @@ public class WarehouseService {
         stockEntry.setWarehouse(warehouse);
         stockEntry.setEntryDate(request.getCreatedDate() != null ? request.getCreatedDate() : LocalDateTime.now());
 
-        stockEntry.setIsApproved(false); 
+        if (request.getSupplierId() != null) {
+            Supplier supplier = supplierRepository.findById(request.getSupplierId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy Nhà cung cấp!"));
+            stockEntry.setSupplier(supplier);
+        }
+
+        stockEntry.setIsApproved(true); 
 
         List<StockEntryItem> entryItems = new ArrayList<>();
         for (ReceiptRequest.ItemDetail itemDto : request.getItems()) {
@@ -122,7 +129,12 @@ public class WarehouseService {
             }
 
             entryItems.add(entryItem);
-            // ĐÃ XÓA dòng inventoryService.addStock ở đây để đảm bảo an toàn dữ liệu
+            
+            // TỰ ĐỘNG DUYỆT VÀ CỘNG KHO
+            if (itemDto.getBatchCode() == null || itemDto.getExpiryDate() == null) {
+                throw new RuntimeException("Sản phẩm " + product.getName() + " thiếu mã lô hoặc ngày hết hạn!");
+            }
+            inventoryService.addStockWithBatch(warehouse.getId(), product.getId(), itemDto.getQuantity(), itemDto.getBatchCode(), itemDto.getExpiryDate());
         }
 
         stockEntry.setItems(entryItems);
