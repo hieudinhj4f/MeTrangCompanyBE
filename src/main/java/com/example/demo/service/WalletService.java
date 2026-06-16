@@ -17,6 +17,7 @@ public class WalletService {
     private final WalletRepository walletRepository;
     private final TransactionHistoryRepository transactionRepository;
     private final CustomerService customerService;
+    private final UserRepository userRepository;
 
     @Transactional
     public Wallet depositMoney(UUID customerOrUserId, BigDecimal amount, UUID performedBy) {
@@ -31,6 +32,13 @@ public class WalletService {
         wallet.setBalance(wallet.getBalance().add(amount));
         Wallet saved = walletRepository.save(wallet);
 
+        String performedByName = "Hệ thống";
+        if (performedBy != null) {
+            performedByName = userRepository.findById(performedBy)
+                    .map(u -> u.getFullName() != null ? u.getFullName() : u.getUsername())
+                    .orElse("Không xác định");
+        }
+
         transactionRepository.save(TransactionHistory.builder()
                 .wallet(saved)
                 .amount(amount)
@@ -38,6 +46,7 @@ public class WalletService {
                 .description("Nạp tiền vào ví")
                 .createdAt(LocalDateTime.now())
                 .performedBy(performedBy)
+                .performedByName(performedByName)
                 .build());
 
         return saved;

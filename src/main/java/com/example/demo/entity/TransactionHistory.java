@@ -39,6 +39,9 @@ public class TransactionHistory {
     @Column(name = "performed_by")
     private UUID performedBy;
 
+    @Column(name = "performed_by_name")
+    private String performedByName;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now(); 
