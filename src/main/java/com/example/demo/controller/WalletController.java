@@ -36,13 +36,13 @@ public class WalletController {
             HttpServletRequest request) {
         try {
             assertCustomerAccess(customerId, request);
-            Wallet wallet = walletService.getWalletByCustomerId(customerId);
+            Wallet wallet = walletService.getWalletByCustomerIdOptional(customerId).orElse(null);
 
             return ResponseEntity.ok(Map.of(
                     "status", "Thành công",
                     "customerId", customerId,
-                    "fullName", wallet.getCustomer().getFullName(),
-                    "balance", wallet.getBalance()
+                    "fullName", wallet != null && wallet.getCustomer() != null ? wallet.getCustomer().getFullName() : "Khách hàng",
+                    "balance", wallet != null ? wallet.getBalance() : BigDecimal.ZERO
             ));
         } catch (RuntimeException e) {
             return ResponseEntity.status(404).body(Map.of(

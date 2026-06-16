@@ -6,6 +6,7 @@ import com.example.demo.dto.response.OrderResponse;
 import com.example.demo.entity.Order;
 import com.example.demo.security.JwtAuthFilter;
 import com.example.demo.service.OrderService;
+import com.example.demo.service.CustomerService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class OrderController {
 
     private final OrderService orderService;
+    private final CustomerService customerService;
 
     @PostMapping("/place")
     public ResponseEntity<?> placeOrder(
@@ -80,7 +82,12 @@ public class OrderController {
         try {
             UUID customerId = (UUID) httpRequest.getAttribute(JwtAuthFilter.ATTR_CUSTOMER_ID);
             if (customerId == null) {
-                return ResponseEntity.status(401).body(Map.of("reason", "Vui lòng đăng nhập lại!"));
+                UUID userId = (UUID) httpRequest.getAttribute(JwtAuthFilter.ATTR_USER_ID);
+                if (userId != null) {
+                    customerId = customerService.ensureCustomerForUserId(userId);
+                } else {
+                    return ResponseEntity.status(401).body(Map.of("reason", "Vui lòng đăng nhập lại!"));
+                }
             }
             List<OrderResponse> myOrders = orderService.getOrdersByCustomerId(customerId);
             return ResponseEntity.ok(myOrders);

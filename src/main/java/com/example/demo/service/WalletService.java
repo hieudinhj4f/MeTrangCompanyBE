@@ -43,14 +43,19 @@ public class WalletService {
         return saved;
     }
     public Wallet getWalletByCustomerId(UUID customerId) {
-    return walletRepository.findByCustomerId(customerId)
-            .orElseThrow(() -> new RuntimeException("Không tìm thấy ví cho khách hàng: " + customerId));
+        return walletRepository.findByCustomerId(customerId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ví cho khách hàng: " + customerId));
+    }
 
-}
+    public java.util.Optional<Wallet> getWalletByCustomerIdOptional(UUID customerId) {
+        return walletRepository.findByCustomerId(customerId);
+    }
     public List<TransactionHistory> getTransactionHistory(UUID customerId) {
         // 1. Tìm ví của khách hàng trước
-        Wallet wallet = walletRepository.findByCustomerId(customerId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy ví cho khách hàng này!"));
+        Wallet wallet = walletRepository.findByCustomerId(customerId).orElse(null);
+        if (wallet == null) {
+            return java.util.Collections.emptyList();
+        }
 
         // 2. Gọi Repository theo đúng tên hàm bạn đã định nghĩa trong ảnh
         return transactionRepository.findByWalletOrderByCreatedAtDesc(wallet);
