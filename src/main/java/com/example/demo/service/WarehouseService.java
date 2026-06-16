@@ -106,6 +106,16 @@ public class WarehouseService {
             stockEntry.setSupplier(supplier);
         }
 
+        if (request.getInvoiceNumber() != null) {
+            stockEntry.setInvoiceNumber(request.getInvoiceNumber());
+        }
+        if (request.getInvoiceSymbol() != null) {
+            stockEntry.setInvoiceSymbol(request.getInvoiceSymbol());
+        }
+        if (request.getVatAmount() != null) {
+            stockEntry.setVatAmount(java.math.BigDecimal.valueOf(request.getVatAmount()));
+        }
+
         stockEntry.setIsApproved(true); 
 
         List<StockEntryItem> entryItems = new ArrayList<>();

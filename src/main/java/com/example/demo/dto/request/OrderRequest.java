@@ -13,4 +13,10 @@ public class OrderRequest {
     private String orderType;
     private String deliveryAddress;
     private Boolean isOnlineOrder = false;
+
+    // VAT Invoice fields
+    private Boolean requiresInvoice = false;
+    private String companyName;
+    private String taxCode;
+    private String billingAddress;
 }

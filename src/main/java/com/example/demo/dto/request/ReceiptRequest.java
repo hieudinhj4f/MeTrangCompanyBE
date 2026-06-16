@@ -22,6 +22,10 @@ public class ReceiptRequest {
     
     private Integer warehouseId; 
 
+    private String invoiceNumber;
+    private String invoiceSymbol;
+    private Double vatAmount;
+
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdDate; 

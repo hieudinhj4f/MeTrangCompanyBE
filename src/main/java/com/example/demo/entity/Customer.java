@@ -53,6 +53,9 @@ public class Customer {
     @Column(name = "credit_limit", columnDefinition = "numeric(38,2) default 0")
     private BigDecimal creditLimit;
 
+    @Column(name = "b2b_discount_rate", columnDefinition = "numeric(5,2) default 0")
+    private BigDecimal b2bDiscountRate;
+
 
     public BigDecimal getTotalSpent() {
         return totalSpent == null ? BigDecimal.ZERO : totalSpent;

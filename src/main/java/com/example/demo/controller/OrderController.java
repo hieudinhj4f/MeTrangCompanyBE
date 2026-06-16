@@ -37,12 +37,7 @@ public class OrderController {
                     
             Order order = orderService.placeOrder(
                     customerId,
-                    request.getWarehouseId(),
-                    request.getItems(),
-                    paymentMethod,
-                    orderType,
-                    request.getDeliveryAddress(),
-                    request.getIsOnlineOrder()
+                    request
             );
 
             return ResponseEntity.ok(Map.of(

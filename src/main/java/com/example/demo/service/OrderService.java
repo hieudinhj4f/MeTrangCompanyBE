@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.entity.*;
 import com.example.demo.repository.*;
 import com.example.demo.dto.request.OrderItemRequest;
+import com.example.demo.dto.request.OrderRequest;
 import com.example.demo.dto.response.OrderResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -34,21 +35,27 @@ public class OrderService {
     private final ProductPriceRepository productPriceRepository;
     private final TransactionHistoryRepository transactionHistoryRepository;
     private final ProductRepository productRepository;
+    private final InvoiceRepository invoiceRepository;
 
     @Transactional
 
-    public Order placeOrder(UUID customerId, Integer warehouseId, List<OrderItemRequest> itemRequests, Order.PaymentMethod paymentMethod, Order.OrderType orderType, String deliveryAddress, Boolean isOnlineOrder) {
-        log.info("🚀 [BẮT ĐẦU ĐẶT HÀNG ĐA KÊNH] Customer: {}, Warehouse: {}, Payment: {}, Type: {}", customerId, warehouseId, paymentMethod, orderType);
+    public Order placeOrder(UUID customerId, OrderRequest request) {
+        log.info("🚀 [BẮT ĐẦU ĐẶT HÀNG ĐA KÊNH] Customer: {}, Warehouse: {}, Payment: {}, Type: {}", customerId, request.getWarehouseId(), request.getPaymentMethod(), request.getOrderType());
 
         if (customerId == null) throw new IllegalArgumentException("customerId không được để trống");
-        if (warehouseId == null) throw new IllegalArgumentException("warehouseId không được để trống");
-        if (itemRequests == null || itemRequests.isEmpty()) throw new IllegalArgumentException("Giỏ hàng trống");
-        if (paymentMethod == null) throw new IllegalArgumentException("Phương thức thanh toán không được để trống");
+        if (request.getWarehouseId() == null) throw new IllegalArgumentException("warehouseId không được để trống");
+        if (request.getItems() == null || request.getItems().isEmpty()) throw new IllegalArgumentException("Giỏ hàng trống");
+        
+        Order.PaymentMethod paymentMethod = request.getPaymentMethod() != null ? 
+                Order.PaymentMethod.valueOf(request.getPaymentMethod()) : Order.PaymentMethod.CASH;
+        Order.OrderType orderType = request.getOrderType() != null ? 
+                Order.OrderType.valueOf(request.getOrderType()) : Order.OrderType.IN_STORE;
+
 
         // 1. Kiểm tra thực thể cơ bản
         Customer customer = customerService.resolveOrCreateCustomer(customerId);
         UUID resolvedCustomerId = customer.getId();
-        Warehouse warehouse = warehouseRepository.findById(warehouseId)
+        Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
                 .orElseThrow(() -> new RuntimeException("Kho không tồn tại!"));
         
 
@@ -58,8 +65,8 @@ public class OrderService {
                 .customer(customer)
                 .warehouse(warehouse)
                 .paymentMethod(paymentMethod) 
-                .orderType(orderType != null ? orderType : Order.OrderType.IN_STORE)
-                .deliveryAddress(deliveryAddress)
+                .orderType(orderType)
+                .deliveryAddress(request.getDeliveryAddress())
                 .status(Order.OrderStatus.PENDING)
                 .totalAmount(BigDecimal.ZERO)
                 .orderDate(LocalDateTime.now())
@@ -69,7 +76,7 @@ public class OrderService {
         BigDecimal totalOriginalAmount = BigDecimal.ZERO;
 
         // 2. Trừ kho và tính tổng tiền gốc (Giữ nguyên logic cực chuẩn của bạn)
-        for (OrderItemRequest req : itemRequests) {
+        for (OrderItemRequest req : request.getItems()) {
             if (req.getProductId() == null) throw new IllegalArgumentException("productId không hợp lệ");
             if (req.getQuantity() == null || req.getQuantity() <= 0) throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
             
@@ -77,7 +84,7 @@ public class OrderService {
                     .orElseThrow(() -> new RuntimeException("Sản phẩm ID " + req.getProductId() + " không tồn tại!"));
             
             // Tự động trừ kho (có FEFO - trừ lô cũ nhất)
-            inventoryService.exportIngredient(warehouseId, product.getId(), req.getQuantity());
+            inventoryService.exportIngredient(request.getWarehouseId(), product.getId(), req.getQuantity());
 
             BigDecimal effectivePrice = product.getBasePrice();
 
@@ -96,8 +103,11 @@ public class OrderService {
         BigDecimal finalAmount = totalOriginalAmount;
 
         if (customerType == Customer.CustomerType.ENTERPRISE) {
-            // Khách B2B: Không áp dụng Rank, mặc định chiết khấu sỉ 15%
-            BigDecimal discountAmount = finalAmount.multiply(new BigDecimal("0.15")).setScale(0, RoundingMode.HALF_UP);
+            // Khách B2B: Áp dụng chiết khấu riêng hoặc mặc định 15%
+            BigDecimal discountRate = customer.getB2bDiscountRate() != null && customer.getB2bDiscountRate().compareTo(BigDecimal.ZERO) > 0 
+                ? customer.getB2bDiscountRate().divide(new BigDecimal("100")) 
+                : new BigDecimal("0.15");
+            BigDecimal discountAmount = finalAmount.multiply(discountRate).setScale(0, RoundingMode.HALF_UP);
             finalAmount = finalAmount.subtract(discountAmount);
         } 
         else if (customerType == Customer.CustomerType.WORKER) {
@@ -117,7 +127,7 @@ public class OrderService {
             // Tự động nạp tiền mặt phần còn thiếu nếu ví không đủ tiền
             BigDecimal missingAmount = finalAmount.subtract(wallet.getBalance());
             if (missingAmount.compareTo(BigDecimal.ZERO) > 0) {
-                if (Boolean.TRUE.equals(isOnlineOrder)) {
+                if (Boolean.TRUE.equals(request.getIsOnlineOrder())) {
                     throw new RuntimeException("Ví không đủ tiền! Vui lòng nạp thêm qua cổng thanh toán hoặc chọn phương thức Tiền mặt khi nhận hàng.");
                 }
 
@@ -177,7 +187,27 @@ public class OrderService {
 
         // 7. Hoàn tất lưu đơn hàng
         order.setTotalAmount(finalAmount);
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        // 8. Tạo Yêu cầu Hóa Đơn (Nếu có)
+        if (Boolean.TRUE.equals(request.getRequiresInvoice())) {
+            Invoice invoice = Invoice.builder()
+                    .order(savedOrder)
+                    .companyName(request.getCompanyName() != null && !request.getCompanyName().isBlank() 
+                            ? request.getCompanyName() 
+                            : (customer.getCompanyName() != null ? customer.getCompanyName() : customer.getFullName()))
+                    .taxCode(request.getTaxCode() != null && !request.getTaxCode().isBlank() 
+                            ? request.getTaxCode() 
+                            : customer.getTaxCode())
+                    .billingAddress(request.getBillingAddress() != null && !request.getBillingAddress().isBlank() 
+                            ? request.getBillingAddress() 
+                            : (customer.getBillingAddress() != null ? customer.getBillingAddress() : "Chưa cập nhật"))
+                    .isIssued(false)
+                    .build();
+            invoiceRepository.save(invoice);
+        }
+
+        return savedOrder;
     }
 
     @Transactional

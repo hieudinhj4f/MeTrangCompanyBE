@@ -36,6 +36,15 @@ public class StockEntry {
     @Column(name = "entry_date")
     private LocalDateTime entryDate;
 
+    @Column(name = "invoice_number")
+    private String invoiceNumber;
+
+    @Column(name = "invoice_symbol")
+    private String invoiceSymbol;
+
+    @Column(name = "vat_amount")
+    private BigDecimal vatAmount;
+
     @OneToMany(mappedBy = "stockEntry", cascade = CascadeType.ALL)
     private List<StockEntryItem> items;
 
