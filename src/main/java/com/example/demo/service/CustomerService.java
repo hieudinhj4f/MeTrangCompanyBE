@@ -38,12 +38,20 @@ public Customer ensureCustomerForUser(User user) {
         return user.getCustomer();
     }
 
+    CustomerType type = CustomerType.RETAIL;
+    BigDecimal defaultCreditLimit = null;
+    if (user.getRole() == User.Role.ENTERPRISE) {
+        type = CustomerType.ENTERPRISE;
+        defaultCreditLimit = new BigDecimal("50000000"); // 50M default limit
+    }
+
     Customer customer = Customer.builder()
             .fullName(user.getFullName() != null ? user.getFullName() : user.getUsername())
             .email(user.getEmail())
             .phoneNumber(user.getPhone())
             .totalSpent(BigDecimal.ZERO)
-            .customerType(CustomerType.RETAIL)
+            .customerType(type)
+            .creditLimit(defaultCreditLimit)
             .build();
             
     customer = customerRepository.saveAndFlush(customer);
@@ -173,6 +181,9 @@ public Customer ensureCustomerForUser(User user) {
         existing.setFullName(updateData.getFullName());
         existing.setPhoneNumber(updateData.getPhoneNumber());
         existing.setEmail(updateData.getEmail());
+        if (updateData.getCreditLimit() != null) {
+            existing.setCreditLimit(updateData.getCreditLimit());
+        }
 
         return customerRepository.save(existing);
     }

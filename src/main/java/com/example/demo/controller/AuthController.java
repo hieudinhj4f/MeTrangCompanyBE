@@ -64,7 +64,7 @@ public class AuthController {
 
     private LoginResponse buildLoginResponse(User user) {
         UUID customerId = null;
-        if (user.getRole() == User.Role.CUSTOMER) {
+        if (user.getRole() == User.Role.CUSTOMER || user.getRole() == User.Role.ENTERPRISE) {
             customerId = customerService.ensureCustomerForUser(user).getId();
         } else if (user.getCustomer() != null) {
             customerId = user.getCustomer().getId();
@@ -84,5 +84,30 @@ public class AuthController {
                 user.getUsername(),
                 user.getRole().name()
         );
+    }
+
+    @GetMapping("/seed-workers")
+    public ResponseEntity<?> seedWorkers(@RequestParam(defaultValue = "100") int count) {
+        int successCount = 0;
+        for (int i = 1; i <= count; i++) {
+            String username = "congnhan_test_" + System.currentTimeMillis() + "_" + i;
+            User user = User.builder()
+                    .username(username)
+                    .password("123456")
+                    .fullName("Công Nhân " + i)
+                    .email(username + "@metrang.com.vn")
+                    .phone("09" + String.format("%08d", (int)(Math.random() * 100000000)))
+                    .role(User.Role.CUSTOMER)
+                    .isActive(true)
+                    .build();
+            try {
+                User savedUser = userService.saveUser(user);
+                customerService.ensureCustomerForUser(savedUser); // Tự động tạo Customer và Wallet
+                successCount++;
+            } catch (Exception e) {
+                // Ignore duplicates or errors
+            }
+        }
+        return ResponseEntity.ok(Map.of("message", "Đã tạo thành công " + successCount + " công nhân mẫu cùng với ví điện tử!"));
     }
 }
