@@ -22,6 +22,7 @@ public class Wallet {
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "id")
+    @com.fasterxml.jackson.annotation.JsonBackReference
     private Customer customer;
 
     @Builder.Default
