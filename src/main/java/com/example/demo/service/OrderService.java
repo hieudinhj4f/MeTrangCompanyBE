@@ -83,8 +83,13 @@ public class OrderService {
             Product product = productRepository.findById(req.getProductId())
                     .orElseThrow(() -> new RuntimeException("Sản phẩm ID " + req.getProductId() + " không tồn tại!"));
             
-            // Tự động trừ kho (có FEFO - trừ lô cũ nhất)
-            inventoryService.exportIngredient(request.getWarehouseId(), product.getId(), req.getQuantity());
+            // Tự động trừ kho (có FEFO - trừ lô cũ nhất) NẾU SẢN PHẨM LÀ NGUYÊN LIỆU (B2B)
+            if (Boolean.TRUE.equals(product.getIsIngredient())) {
+                if (request.getWarehouseId() == null) {
+                    throw new IllegalArgumentException("Vui lòng chọn Kho xuất hàng khi bán Nguyên liệu!");
+                }
+                inventoryService.exportIngredient(request.getWarehouseId(), product.getId(), req.getQuantity());
+            }
 
             BigDecimal effectivePrice = product.getBasePrice();
 
