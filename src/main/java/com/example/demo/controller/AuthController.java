@@ -58,7 +58,7 @@ public class AuthController {
                 .isActive(true)
                 .build();
 
-        User savedUser = userService.saveUser(user);
+        User savedUser = userService.saveUser(user, null);
         return ResponseEntity.ok(buildLoginResponse(savedUser));
     }
 
@@ -101,7 +101,7 @@ public class AuthController {
                     .isActive(true)
                     .build();
             try {
-                User savedUser = userService.saveUser(user);
+                User savedUser = userService.saveUser(user, null);
                 customerService.ensureCustomerForUser(savedUser); // Tự động tạo Customer và Wallet
                 successCount++;
             } catch (Exception e) {

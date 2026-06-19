@@ -19,34 +19,29 @@ public class UserService {
     @Autowired
     private CustomerService customerService;
 
-    // Lấy danh sách nhân viên
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
     // Tìm kiếm bằng UUID
-    public Optional<User> getUserById(UUID id) { 
+    public Optional<User> getUserById(UUID id) {
         return userRepository.findById(id);
     }
 
     // Lưu nhân viên / khách hàng
     @Transactional
-    public User saveUser(User user, UUID enterpriseId) {
+    public User saveUser(User user) {
         User saved = userRepository.save(user);
         if (saved.getRole() == Role.CUSTOMER) {
-            com.example.demo.entity.Customer customer = customerService.ensureCustomerForUser(saved);
-            if (enterpriseId != null) {
-                customer.setEnterpriseId(enterpriseId);
-            }
+            customerService.ensureCustomerForUser(saved);
             return userRepository.findById(saved.getId()).orElse(saved);
         }
         return saved;
     }
 
-    // Vô hiệu hóa tài khoản (Soft Delete)
     public void deactivateUser(UUID id) {
         userRepository.findById(id).ifPresent(user -> {
-            user.setIsActive(false); // Đảm bảo Entity dùng isActive thay vì status
+            user.setIsActive(false);
             userRepository.save(user);
         });
     }

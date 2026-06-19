@@ -83,13 +83,16 @@ public class UserController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable UUID id, @RequestBody UserRequest userDetails) {
-        return userService.getUserById(id).map(user -> {
+        Optional<User> userOpt = userService.getUserById(id);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
             user.setFullName(userDetails.getFullName());
             user.setRole(userDetails.getRole());
             user.setEmail(userDetails.getEmail());
             user.setPhone(userDetails.getPhone());
             return ResponseEntity.ok(userService.saveUser(user, userDetails.getEnterpriseId()));
-        }).orElse(ResponseEntity.notFound().build());
+        }
+        return ResponseEntity.notFound().build();
     }
 
     /**
