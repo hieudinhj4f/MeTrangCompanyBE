@@ -62,12 +62,7 @@ public class AuthController {
         );
     }
 
-    @GetMapping("/enterprises")
-    public ResponseEntity<?> getPublicEnterprises() {
-        return ResponseEntity.ok(customerService.getAllEnterprisePartners().stream()
-                .map(c -> Map.of("id", c.getId(), "companyName", c.getCompanyName() != null ? c.getCompanyName() : c.getFullName()))
-                .toList());
-    }
+
 
     @GetMapping("/seed-workers")
     public ResponseEntity<?> seedWorkers(@RequestParam(defaultValue = "100") int count) {
