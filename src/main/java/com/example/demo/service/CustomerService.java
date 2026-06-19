@@ -170,11 +170,14 @@ public Customer ensureCustomerForUser(User user) {
         }
 
         // Kiểm tra mã số thuế nếu có sự thay đổi
-        if (!existing.getTaxCode().equals(updateData.getTaxCode())) {
-            if (customerRepository.findByTaxCode(updateData.getTaxCode()).isPresent()) {
+        String newTaxCode = updateData.getTaxCode() != null ? updateData.getTaxCode().trim() : null;
+        String oldTaxCode = existing.getTaxCode();
+
+        if (newTaxCode != null && !newTaxCode.isEmpty() && !newTaxCode.equals(oldTaxCode)) {
+            if (customerRepository.findByTaxCode(newTaxCode).isPresent()) {
                 throw new IllegalArgumentException("Mã số thuế mới bị trùng lặp với doanh nghiệp khác!");
             }
-            existing.setTaxCode(updateData.getTaxCode());
+            existing.setTaxCode(newTaxCode);
         }
 
         if (updateData.getBillingAddress() == null || updateData.getBillingAddress().trim().isEmpty()) {
