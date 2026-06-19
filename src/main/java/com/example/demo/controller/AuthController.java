@@ -1,7 +1,6 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.request.LoginRequest;
-import com.example.demo.dto.request.RegisterRequest;
 import com.example.demo.dto.response.LoginResponse;
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
@@ -36,8 +35,6 @@ public class AuthController {
                         .body(Map.of("reason", "Sai tài khoản hoặc mật khẩu")));
     }
 
-
-
     private LoginResponse buildLoginResponse(User user) {
         UUID customerId = null;
         if (user.getRole() == User.Role.CUSTOMER || user.getRole() == User.Role.ENTERPRISE) {
@@ -50,19 +47,15 @@ public class AuthController {
                 user.getId(),
                 customerId,
                 user.getRole().name(),
-                user.getUsername()
-        );
+                user.getUsername());
 
         return new LoginResponse(
                 token,
                 user.getId(),
                 customerId,
                 user.getUsername(),
-                user.getRole().name()
-        );
+                user.getRole().name());
     }
-
-
 
     @GetMapping("/seed-workers")
     public ResponseEntity<?> seedWorkers(@RequestParam(defaultValue = "100") int count) {
@@ -74,7 +67,7 @@ public class AuthController {
                     .password("123456")
                     .fullName("Công Nhân " + i)
                     .email(username + "@metrang.com.vn")
-                    .phone("09" + String.format("%08d", (int)(Math.random() * 100000000)))
+                    .phone("09" + String.format("%08d", (int) (Math.random() * 100000000)))
                     .role(User.Role.CUSTOMER)
                     .isActive(true)
                     .build();
@@ -86,6 +79,7 @@ public class AuthController {
                 // Ignore duplicates or errors
             }
         }
-        return ResponseEntity.ok(Map.of("message", "Đã tạo thành công " + successCount + " công nhân mẫu cùng với ví điện tử!"));
+        return ResponseEntity
+                .ok(Map.of("message", "Đã tạo thành công " + successCount + " công nhân mẫu cùng với ví điện tử!"));
     }
 }
