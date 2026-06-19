@@ -57,45 +57,7 @@ public class CustomerController {
         }
     }
 
-    @GetMapping("/b2b")
-    public ResponseEntity<?> getEnterprisePartners(HttpServletRequest request) {
-        try {
-            assertAdminAccess(request); // Chặn khách thường truy cập
-            List<Customer> partners = customerService.getAllEnterprisePartners();
-            return ResponseEntity.ok(partners);
-        } catch (Exception e) {
-            return ResponseEntity.status(403).body(Map.of("reason", e.getMessage()));
-        }
-    }
 
-    @PostMapping("/b2b")
-    public ResponseEntity<?> createEnterprisePartner(@RequestBody Customer requestData, HttpServletRequest request) {
-        try {
-            assertAdminAccess(request); // Phân quyền bảo mật
-            Customer saved = customerService.createEnterprisePartner(requestData);
-            return ResponseEntity.ok(saved);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("reason", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("reason", "Lỗi máy chủ: " + e.getMessage()));
-        }
-    }
-
-    @PutMapping("/b2b/{id}")
-    public ResponseEntity<?> updateEnterprisePartner(
-            @PathVariable UUID id,
-            @RequestBody Customer updateData,
-            HttpServletRequest request) {
-        try {
-            assertAdminAccess(request); 
-            Customer updated = customerService.updateEnterprisePartner(id, updateData);
-            return ResponseEntity.ok(updated);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("reason", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("reason", "Lỗi xử lý: " + e.getMessage()));
-        }
-    }
 
     @GetMapping("/enterprise/workers")
     public ResponseEntity<?> getEnterpriseWorkers(HttpServletRequest request) {

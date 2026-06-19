@@ -95,12 +95,5 @@ public class UserController {
         return ResponseEntity.notFound().build();
     }
 
-    /**
-     * Vô hiệu hóa tài khoản (Soft Delete)
-     */
-    @PatchMapping("/{id}/deactivate")
-    public ResponseEntity<Void> deactivateUser(@PathVariable UUID id) {
-        userService.deactivateUser(id);
-        return ResponseEntity.ok().build();
-    }
+
 }

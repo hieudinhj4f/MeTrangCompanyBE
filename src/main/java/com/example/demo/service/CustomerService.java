@@ -90,69 +90,10 @@ public Customer ensureCustomerForUser(User user) {
     // =========================================================================
 
     @Transactional(readOnly = true)
-    public List<Customer> getAllEnterprisePartners() {
-        // Lấy danh sách chỉ riêng khách hàng Doanh nghiệp
-        return customerRepository.findByCustomerType(CustomerType.ENTERPRISE);
-    }
-
-    @Transactional(readOnly = true)
     public List<Customer> getWorkersByEnterprise(UUID enterpriseId) {
         return customerRepository.findByEnterpriseId(enterpriseId);
     }
 
-    @Transactional
-    public Customer createEnterprisePartner(Customer dto) {
-        // 1. Validate dữ liệu B2B bắt buộc
-        if (dto.getCompanyName() == null || dto.getCompanyName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Tên doanh nghiệp không được để trống!");
-        }
-        if (dto.getTaxCode() == null || dto.getTaxCode().trim().isEmpty()) {
-            throw new IllegalArgumentException("Mã số thuế không được để trống!");
-        }
-        if (dto.getBillingAddress() == null || dto.getBillingAddress().trim().isEmpty()) {
-            throw new IllegalArgumentException("Địa chỉ xuất hóa đơn không được để trống!");
-        }
-
-        // 2. Kiểm tra trùng lặp Mã số thuế
-        Optional<Customer> existingTaxCode = customerRepository.findByTaxCode(dto.getTaxCode().trim());
-        if (existingTaxCode.isPresent()) {
-            throw new IllegalArgumentException("Mã số thuế này đã được đăng ký cho doanh nghiệp: " + existingTaxCode.get().getCompanyName());
-        }
-
-        // 3. Gán mặc định các giá trị của một đối tác B2B
-        Customer enterpriseCustomer = Customer.builder()
-                .fullName(dto.getFullName()) // Tên người đại diện
-                .phoneNumber(dto.getPhoneNumber())
-                .email(dto.getEmail())
-                .customerType(CustomerType.ENTERPRISE) // Bắt buộc gán type là ENTERPRISE
-                .companyName(dto.getCompanyName().trim())
-                .taxCode(dto.getTaxCode().trim())
-                .billingAddress(dto.getBillingAddress())
-                .creditLimit(new BigDecimal("50000000"))
-                .build();
-
-        Customer savedCustomer = customerRepository.save(enterpriseCustomer);
-        ensureWalletExists(savedCustomer);
-
-        // Tự động tạo tài khoản cho Doanh nghiệp (Sử dụng Mã số thuế làm Username)
-        String username = dto.getTaxCode().trim();
-        if (userRepository.findByUsername(username).isEmpty()) {
-            User user = User.builder()
-                    .username(username)
-                    .password("123456") // Mật khẩu mặc định
-                    .fullName(dto.getCompanyName())
-                    .email(dto.getEmail())
-                    .phone(dto.getPhoneNumber())
-                    .role(User.Role.ENTERPRISE)
-                    .isActive(true)
-                    .customer(savedCustomer)
-                    .build();
-            userRepository.save(user);
-        }
-
-        return savedCustomer;
-    }
-    
     @Transactional(readOnly = true)
     public Customer searchCustomerForPOS(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
@@ -174,42 +115,5 @@ public Customer ensureCustomerForUser(User user) {
         }
         
         throw new IllegalArgumentException("Không tìm thấy hồ sơ khách hàng nào khớp với: " + cleanKeyword);
-    }
-
-
-    @Transactional
-    public Customer updateEnterprisePartner(UUID id, Customer updateData) {
-        Customer existing = customerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ đối tác!"));
-
-        if (existing.getCustomerType() != CustomerType.ENTERPRISE) {
-            throw new IllegalArgumentException("Đây không phải là hồ sơ Doanh nghiệp B2B!");
-        }
-
-        // Kiểm tra mã số thuế nếu có sự thay đổi
-        String newTaxCode = updateData.getTaxCode() != null ? updateData.getTaxCode().trim() : null;
-        String oldTaxCode = existing.getTaxCode();
-
-        if (newTaxCode != null && !newTaxCode.isEmpty() && !newTaxCode.equals(oldTaxCode)) {
-            if (customerRepository.findByTaxCode(newTaxCode).isPresent()) {
-                throw new IllegalArgumentException("Mã số thuế mới bị trùng lặp với doanh nghiệp khác!");
-            }
-            existing.setTaxCode(newTaxCode);
-        }
-
-        if (updateData.getBillingAddress() == null || updateData.getBillingAddress().trim().isEmpty()) {
-            throw new IllegalArgumentException("Địa chỉ xuất hóa đơn không được để trống!");
-        }
-
-        existing.setCompanyName(updateData.getCompanyName());
-        existing.setBillingAddress(updateData.getBillingAddress());
-        existing.setFullName(updateData.getFullName());
-        existing.setPhoneNumber(updateData.getPhoneNumber());
-        existing.setEmail(updateData.getEmail());
-        if (updateData.getCreditLimit() != null) {
-            existing.setCreditLimit(updateData.getCreditLimit());
-        }
-
-        return customerRepository.save(existing);
     }
 }

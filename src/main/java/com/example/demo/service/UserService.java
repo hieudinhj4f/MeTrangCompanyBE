@@ -43,10 +43,5 @@ public class UserService {
         return saved;
     }
 
-    public void deactivateUser(UUID id) {
-        userRepository.findById(id).ifPresent(user -> {
-            user.setIsActive(false);
-            userRepository.save(user);
-        });
-    }
+
 }

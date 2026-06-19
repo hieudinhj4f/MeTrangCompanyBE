@@ -36,31 +36,7 @@ public class AuthController {
                         .body(Map.of("reason", "Sai tài khoản hoặc mật khẩu")));
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-        if (request.getUsername() == null || request.getUsername().isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("reason", "Username không được để trống"));
-        }
-        if (request.getPassword() == null || request.getPassword().isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("reason", "Mật khẩu không được để trống"));
-        }
-        if (userRepository.existsByUsername(request.getUsername())) {
-            return ResponseEntity.badRequest().body(Map.of("reason", "Username đã tồn tại!"));
-        }
 
-        User user = User.builder()
-                .username(request.getUsername())
-                .password(request.getPassword())
-                .fullName(request.getFullName())
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .role(User.Role.CUSTOMER)
-                .isActive(true)
-                .build();
-
-        User savedUser = userService.saveUser(user, request.getEnterpriseId());
-        return ResponseEntity.ok(buildLoginResponse(savedUser));
-    }
 
     private LoginResponse buildLoginResponse(User user) {
         UUID customerId = null;
