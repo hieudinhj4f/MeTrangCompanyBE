@@ -82,7 +82,7 @@ public class UserController {
      * Cập nhật thông tin nhân viên
      */
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable UUID id, @RequestBody UserRequest userDetails) {
+    public ResponseEntity<UserResponse> updateUser(@PathVariable UUID id, @RequestBody UserRequest userDetails) {
         Optional<User> userOpt = userService.getUserById(id);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
@@ -90,7 +90,19 @@ public class UserController {
             user.setRole(userDetails.getRole());
             user.setEmail(userDetails.getEmail());
             user.setPhone(userDetails.getPhone());
-            return ResponseEntity.ok(userService.saveUser(user, userDetails.getEnterpriseId()));
+            
+            User savedUser = userService.saveUser(user, userDetails.getEnterpriseId());
+            UserResponse response = UserResponse.builder()
+                    .id(savedUser.getId())
+                    .username(savedUser.getUsername())
+                    .fullName(savedUser.getFullName())
+                    .email(savedUser.getEmail())
+                    .phone(savedUser.getPhone())
+                    .role(savedUser.getRole())
+                    .isActive(savedUser.getIsActive())
+                    .customerId(savedUser.getCustomer() != null ? savedUser.getCustomer().getId() : null)
+                    .build();
+            return ResponseEntity.ok(response);
         }
         return ResponseEntity.notFound().build();
     }
