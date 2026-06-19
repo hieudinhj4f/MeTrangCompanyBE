@@ -14,7 +14,7 @@ public class CustomerProfileResponse {
     private String fullName;
     private String phoneNumber;
     private String email;
-    private BigDecimal totalSpent;
+    private String customerType;
 
     public static CustomerProfileResponse from(Customer customer) {
         return CustomerProfileResponse.builder()
@@ -22,7 +22,7 @@ public class CustomerProfileResponse {
                 .fullName(customer.getFullName())
                 .phoneNumber(customer.getPhoneNumber())
                 .email(customer.getEmail())
-                .totalSpent(customer.getTotalSpent())
+                .customerType(customer.getCustomerType().name())
                 .build();
     }
 }

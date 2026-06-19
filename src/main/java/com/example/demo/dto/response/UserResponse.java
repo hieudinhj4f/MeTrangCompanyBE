@@ -16,4 +16,5 @@ public class UserResponse {
     private Role role;
     private Boolean isActive;
     private UUID customerId;
+    private UUID enterpriseId;
 }   

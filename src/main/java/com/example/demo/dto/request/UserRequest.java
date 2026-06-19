@@ -12,4 +12,5 @@ public class UserRequest {
     private String phone;
     private Role role;
     private Boolean isActive;
+    private java.util.UUID enterpriseId;
 }

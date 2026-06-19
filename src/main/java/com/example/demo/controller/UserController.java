@@ -64,7 +64,7 @@ public class UserController {
                 .isActive(true) 
                 .build();
 
-        User savedUser = userService.saveUser(user);
+        User savedUser = userService.saveUser(user, request.getEnterpriseId());
 
         UserResponse response = UserResponse.builder()
                 .id(savedUser.getId())
@@ -82,13 +82,13 @@ public class UserController {
      * Cập nhật thông tin nhân viên
      */
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable UUID id, @RequestBody User userDetails) {
+    public ResponseEntity<User> updateUser(@PathVariable UUID id, @RequestBody UserRequest userDetails) {
         return userService.getUserById(id).map(user -> {
             user.setFullName(userDetails.getFullName());
             user.setRole(userDetails.getRole());
             user.setEmail(userDetails.getEmail());
             user.setPhone(userDetails.getPhone());
-            return ResponseEntity.ok(userService.saveUser(user));
+            return ResponseEntity.ok(userService.saveUser(user, userDetails.getEnterpriseId()));
         }).orElse(ResponseEntity.notFound().build());
     }
 

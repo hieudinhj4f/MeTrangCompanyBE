@@ -49,7 +49,6 @@ public Customer ensureCustomerForUser(User user) {
             .fullName(user.getFullName() != null ? user.getFullName() : user.getUsername())
             .email(user.getEmail())
             .phoneNumber(user.getPhone())
-            .totalSpent(BigDecimal.ZERO)
             .customerType(type)
             .creditLimit(defaultCreditLimit)
             .build();
@@ -129,7 +128,6 @@ public Customer ensureCustomerForUser(User user) {
                 .companyName(dto.getCompanyName().trim())
                 .taxCode(dto.getTaxCode().trim())
                 .billingAddress(dto.getBillingAddress())
-                .totalSpent(BigDecimal.ZERO)
                 .creditLimit(new BigDecimal("50000000"))
                 .build();
 

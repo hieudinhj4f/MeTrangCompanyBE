@@ -185,10 +185,8 @@ public class OrderService {
             order.setStatus(Order.OrderStatus.PAID);
         }
 
-        // 6. Cập nhật thăng hạng (Áp dụng cho mọi đối tượng để kích cầu)
-        BigDecimal newTotalSpent = (customer.getTotalSpent() != null ? customer.getTotalSpent() : BigDecimal.ZERO).add(finalAmount);
-        customer.setTotalSpent(newTotalSpent);
-        customerRepository.save(customer);
+        // 6. Cập nhật thăng hạng (Áp dụng cho mọi        // Add Reward Points if needed in the future
+        // customerRepository.save(customer);
 
         // 7. Hoàn tất lưu đơn hàng
         order.setTotalAmount(finalAmount);

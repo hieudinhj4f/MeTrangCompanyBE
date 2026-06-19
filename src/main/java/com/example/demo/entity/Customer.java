@@ -14,7 +14,7 @@ import java.util.UUID;
 @Builder
 public class Customer {
 
-    public enum CustomerType{
+    public enum CustomerType {
         RETAIL,
         WORKER,
         ENTERPRISE
@@ -33,15 +33,11 @@ public class Customer {
     @Column(unique = true)
     private String email;
 
-    @Column(name = "total_spent", nullable = false, columnDefinition = "numeric(38,2) default 0")
-    private BigDecimal totalSpent;
-
-
     @Column(name = "company_name")
     private String companyName;
 
     @Column(name = "tax_code", unique = true)
-    private String taxCode; 
+    private String taxCode;
 
     @Column(name = "billing_address")
     private String billingAddress;
@@ -59,10 +55,6 @@ public class Customer {
     // UUID of the ENTERPRISE customer if this customer is a WORKER
     @Column(name = "enterprise_id")
     private UUID enterpriseId;
-
-    public BigDecimal getTotalSpent() {
-        return totalSpent == null ? BigDecimal.ZERO : totalSpent;
-    }
 
     @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL)
     private Wallet wallet;
