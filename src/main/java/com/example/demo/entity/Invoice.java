@@ -42,8 +42,9 @@ public class Invoice {
     @Column(name = "e_invoice_number")
     private String eInvoiceNumber;
 
-    @Column(name = "tax_rate", columnDefinition = "numeric(5,2) default 8.00")
-    private BigDecimal taxRate;
+    @Column(name = "tax_rate", columnDefinition = "numeric(5,2)")
+    @Builder.Default
+    private BigDecimal taxRate = new BigDecimal("8.00");
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

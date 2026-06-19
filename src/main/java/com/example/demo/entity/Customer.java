@@ -46,11 +46,13 @@ public class Customer {
     @Enumerated(EnumType.STRING)
     private CustomerType customerType;
 
-    @Column(name = "credit_limit", columnDefinition = "numeric(38,2) default 0")
-    private BigDecimal creditLimit;
+    @Column(name = "credit_limit", columnDefinition = "numeric(38,2)")
+    @Builder.Default
+    private BigDecimal creditLimit = BigDecimal.ZERO;
 
-    @Column(name = "b2b_discount_rate", columnDefinition = "numeric(5,2) default 0")
-    private BigDecimal b2bDiscountRate;
+    @Column(name = "b2b_discount_rate", columnDefinition = "numeric(5,2)")
+    @Builder.Default
+    private BigDecimal b2bDiscountRate = BigDecimal.ZERO;
 
     // UUID of the ENTERPRISE customer if this customer is a WORKER
     @Column(name = "enterprise_id")
