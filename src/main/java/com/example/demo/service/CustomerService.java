@@ -131,7 +131,26 @@ public Customer ensureCustomerForUser(User user) {
                 .creditLimit(new BigDecimal("50000000"))
                 .build();
 
-        return customerRepository.save(enterpriseCustomer);
+        Customer savedCustomer = customerRepository.save(enterpriseCustomer);
+        ensureWalletExists(savedCustomer);
+
+        // Tự động tạo tài khoản cho Doanh nghiệp (Sử dụng Mã số thuế làm Username)
+        String username = dto.getTaxCode().trim();
+        if (userRepository.findByUsername(username).isEmpty()) {
+            User user = User.builder()
+                    .username(username)
+                    .password("123456") // Mật khẩu mặc định
+                    .fullName(dto.getCompanyName())
+                    .email(dto.getEmail())
+                    .phone(dto.getPhoneNumber())
+                    .role(User.Role.ENTERPRISE)
+                    .isActive(true)
+                    .customer(savedCustomer)
+                    .build();
+            userRepository.save(user);
+        }
+
+        return savedCustomer;
     }
     
     @Transactional(readOnly = true)

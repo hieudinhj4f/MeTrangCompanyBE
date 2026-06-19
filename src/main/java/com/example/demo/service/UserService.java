@@ -36,6 +36,7 @@ public class UserService {
             com.example.demo.entity.Customer customer = customerService.ensureCustomerForUser(saved);
             if (enterpriseId != null) {
                 customer.setEnterpriseId(enterpriseId);
+                customer.setCustomerType(com.example.demo.entity.Customer.CustomerType.WORKER);
             }
             return userRepository.findById(saved.getId()).orElse(saved);
         }

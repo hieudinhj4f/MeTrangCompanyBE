@@ -58,7 +58,7 @@ public class AuthController {
                 .isActive(true)
                 .build();
 
-        User savedUser = userService.saveUser(user, null);
+        User savedUser = userService.saveUser(user, request.getEnterpriseId());
         return ResponseEntity.ok(buildLoginResponse(savedUser));
     }
 
@@ -84,6 +84,13 @@ public class AuthController {
                 user.getUsername(),
                 user.getRole().name()
         );
+    }
+
+    @GetMapping("/enterprises")
+    public ResponseEntity<?> getPublicEnterprises() {
+        return ResponseEntity.ok(customerService.getAllEnterprisePartners().stream()
+                .map(c -> Map.of("id", c.getId(), "companyName", c.getCompanyName() != null ? c.getCompanyName() : c.getFullName()))
+                .toList());
     }
 
     @GetMapping("/seed-workers")
