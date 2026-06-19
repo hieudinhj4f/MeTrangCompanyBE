@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -51,17 +52,16 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest request) {
         User user = User.builder()
                 .username(request.getUsername())
-                .password(request.getPassword()) 
+                .password(request.getPassword())
                 .fullName(request.getFullName())
                 .email(request.getEmail())
                 .phone(request.getPhone())
                 .role(request.getRole())
-                .isActive(true) 
+                .isActive(true)
                 .build();
 
         User savedUser = userService.saveUser(user, request.getEnterpriseId());

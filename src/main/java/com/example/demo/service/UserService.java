@@ -30,10 +30,13 @@ public class UserService {
 
     // Lưu nhân viên / khách hàng
     @Transactional
-    public User saveUser(User user) {
+    public User saveUser(User user, UUID enterpriseId) {
         User saved = userRepository.save(user);
         if (saved.getRole() == Role.CUSTOMER) {
-            customerService.ensureCustomerForUser(saved);
+            com.example.demo.entity.Customer customer = customerService.ensureCustomerForUser(saved);
+            if (enterpriseId != null) {
+                customer.setEnterpriseId(enterpriseId);
+            }
             return userRepository.findById(saved.getId()).orElse(saved);
         }
         return saved;
