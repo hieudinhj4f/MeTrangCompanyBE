@@ -56,6 +56,9 @@ public class Customer {
     @Column(name = "b2b_discount_rate", columnDefinition = "numeric(5,2) default 0")
     private BigDecimal b2bDiscountRate;
 
+    // UUID of the ENTERPRISE customer if this customer is a WORKER
+    @Column(name = "enterprise_id")
+    private UUID enterpriseId;
 
     public BigDecimal getTotalSpent() {
         return totalSpent == null ? BigDecimal.ZERO : totalSpent;

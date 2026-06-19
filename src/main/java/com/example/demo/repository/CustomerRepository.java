@@ -23,5 +23,6 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
     // 2. Lấy danh sách khách hàng theo phân loại (RETAIL, WORKER, ENTERPRISE)
     List<Customer> findByCustomerType(Customer.CustomerType customerType);
 
-    
+    // Lấy danh sách công nhân thuộc về một doanh nghiệp
+    List<Customer> findByEnterpriseId(UUID enterpriseId);
 }

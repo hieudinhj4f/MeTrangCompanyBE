@@ -96,6 +96,11 @@ public Customer ensureCustomerForUser(User user) {
         return customerRepository.findByCustomerType(CustomerType.ENTERPRISE);
     }
 
+    @Transactional(readOnly = true)
+    public List<Customer> getWorkersByEnterprise(UUID enterpriseId) {
+        return customerRepository.findByEnterpriseId(enterpriseId);
+    }
+
     @Transactional
     public Customer createEnterprisePartner(Customer dto) {
         // 1. Validate dữ liệu B2B bắt buộc

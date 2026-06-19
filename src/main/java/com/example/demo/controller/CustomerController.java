@@ -97,7 +97,20 @@ public class CustomerController {
         }
     }
 
-
+    @GetMapping("/enterprise/workers")
+    public ResponseEntity<?> getEnterpriseWorkers(HttpServletRequest request) {
+        try {
+            String role = (String) request.getAttribute(JwtAuthFilter.ATTR_ROLE);
+            if (!"ENTERPRISE".equals(role)) {
+                return ResponseEntity.status(403).body(Map.of("reason", "Chỉ doanh nghiệp mới được xem danh sách này."));
+            }
+            UUID enterpriseId = resolveCustomerId(request);
+            List<Customer> workers = customerService.getWorkersByEnterprise(enterpriseId);
+            return ResponseEntity.ok(workers);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("reason", "Lỗi xử lý: " + e.getMessage()));
+        }
+    }
 
     private UUID resolveCustomerId(HttpServletRequest request) {
         UUID authCustomerId = (UUID) request.getAttribute(JwtAuthFilter.ATTR_CUSTOMER_ID);
