@@ -45,17 +45,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
-        String path = request.getRequestURI();
-        boolean protectedPath = path.startsWith("/api/wallets")
-                || path.startsWith("/api/orders")
-                || path.startsWith("/api/payment")
-                || path.startsWith("/api/customers");
-
-        if (!protectedPath) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
