@@ -116,4 +116,26 @@ public Customer ensureCustomerForUser(User user) {
         
         throw new IllegalArgumentException("Không tìm thấy hồ sơ khách hàng nào khớp với: " + cleanKeyword);
     }
+
+    @Transactional(readOnly = true)
+    public List<Customer> getAllB2BCustomers() {
+        return customerRepository.findByCustomerType(Customer.CustomerType.ENTERPRISE);
+    }
+
+    @Transactional
+    public Customer updateB2BCustomer(UUID id, Customer updateData) {
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
+        
+        if (customer.getCustomerType() != Customer.CustomerType.ENTERPRISE) {
+            throw new RuntimeException("Khách hàng này không phải là Doanh nghiệp (ENTERPRISE)");
+        }
+        
+        if (updateData.getCompanyName() != null) customer.setCompanyName(updateData.getCompanyName());
+        if (updateData.getTaxCode() != null) customer.setTaxCode(updateData.getTaxCode());
+        if (updateData.getCreditLimit() != null) customer.setCreditLimit(updateData.getCreditLimit());
+        if (updateData.getB2bDiscountRate() != null) customer.setB2bDiscountRate(updateData.getB2bDiscountRate());
+        
+        return customerRepository.save(customer);
+    }
 }

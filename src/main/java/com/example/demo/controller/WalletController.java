@@ -197,4 +197,20 @@ public class WalletController {
             throw new RuntimeException("Không có quyền truy cập ví này");
         }
     }
+
+    @PostMapping("/admin/fix-enterprise-balances")
+    public ResponseEntity<?> fixHistoricalEnterpriseBalances(HttpServletRequest request) {
+        String role = (String) request.getAttribute(JwtAuthFilter.ATTR_ROLE);
+        if (!"ADMIN".equals(role)) {
+            return ResponseEntity.status(403).body(Map.of("reason", "Chỉ Quản trị viên mới được thực hiện"));
+        }
+        
+        try {
+            // Đây là API chạy một lần để fix dữ liệu cũ
+            String result = walletService.fixHistoricalEnterpriseBalances();
+            return ResponseEntity.ok(Map.of("message", result));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("reason", e.getMessage()));
+        }
+    }
 }

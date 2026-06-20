@@ -57,8 +57,34 @@ public class CustomerController {
         }
     }
 
+    @GetMapping("/b2b")
+    public ResponseEntity<?> getB2BCustomers(HttpServletRequest request) {
+        try {
+            assertAdminAccess(request);
+            List<Customer> b2bCustomers = customerService.getAllB2BCustomers();
+            return ResponseEntity.ok(b2bCustomers);
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(Map.of("reason", e.getMessage()));
+        }
+    }
 
-
+    @PutMapping("/b2b/{id}")
+    public ResponseEntity<?> updateB2BCustomer(
+            @PathVariable UUID id,
+            @RequestBody Customer updateData,
+            HttpServletRequest request) {
+        try {
+            assertAdminAccess(request);
+            Customer updated = customerService.updateB2BCustomer(id, updateData);
+            return ResponseEntity.ok(Map.of(
+                    "status", "Thành công",
+                    "message", "Cập nhật thông tin Doanh nghiệp thành công",
+                    "data", updated
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("reason", e.getMessage()));
+        }
+    }
     @GetMapping("/enterprise/workers")
     public ResponseEntity<?> getEnterpriseWorkers(HttpServletRequest request) {
         try {
