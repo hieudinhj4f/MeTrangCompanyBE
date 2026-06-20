@@ -18,4 +18,6 @@ public interface ProductPriceRepository extends JpaRepository<ProductPrice, Long
            "AND (p.endDate IS NULL OR p.endDate >= :now) " +
            "ORDER BY p.startDate DESC")
     Optional<ProductPrice> findCurrentPrice(@Param("productId") Long productId, @Param("now") LocalDateTime now);
+    
+    void deleteByProductId(Long productId);
 }

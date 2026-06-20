@@ -209,8 +209,18 @@ public class ProductService {
         productRepository.save(product); 
 
         return savedPrice;
-
-        
     }
 
+    @Transactional
+    public void deleteProduct(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+        
+        try {
+            productPriceRepository.deleteByProductId(product.getId()); // Optional: clean up prices if needed
+            productRepository.delete(product);
+        } catch (Exception e) {
+            throw new RuntimeException("Không thể xóa sản phẩm này vì đã phát sinh giao dịch (tồn kho, đơn hàng...). Hãy sử dụng chức năng Ngưng Kinh Doanh thay thế!");
+        }
+    }
 }

@@ -112,4 +112,14 @@ public class ProductController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "Lỗi", "reason", e.getMessage()));
         }
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
+        try {
+            productService.deleteProduct(id);
+            return ResponseEntity.ok(Map.of("status", "Thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("reason", e.getMessage()));
+        }
+    }
 }
