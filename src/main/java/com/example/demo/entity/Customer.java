@@ -60,4 +60,8 @@ public class Customer {
 
     @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL)
     private Wallet wallet;
+
+    @OneToOne(mappedBy = "customer", fetch = FetchType.EAGER)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"customer", "password"})
+    private User user;
 }

@@ -23,6 +23,10 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    public List<User> getWorkersByEnterprise(UUID enterpriseId) {
+        return userRepository.findByEnterpriseId(enterpriseId);
+    }
+
     // Tìm kiếm bằng UUID
     public Optional<User> getUserById(UUID id) {
         return userRepository.findById(id);
