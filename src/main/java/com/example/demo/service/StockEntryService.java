@@ -19,7 +19,6 @@ public class StockEntryService {
 
         StockEntry savedEntry = stockEntryRepository.save(stockEntry);
 
-        // 2. Cập nhật kho cho từng nguyên liệu/sản phẩm trong phiếu
         for (StockEntryItem item : savedEntry.getItems()) {
             InventoryId invId = new InventoryId(
                 savedEntry.getWarehouse().getId(),

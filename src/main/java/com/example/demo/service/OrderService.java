@@ -192,8 +192,8 @@ public class OrderService {
         order.setTotalAmount(finalAmount);
         Order savedOrder = orderRepository.save(order);
 
-        // 8. Tạo Yêu cầu Hóa Đơn (Nếu có)
-        if (Boolean.TRUE.equals(request.getRequiresInvoice())) {
+        // 8. Tạo Yêu cầu Hóa Đơn (Tự động xuất nếu thanh toán qua VÍ hoặc có yêu cầu)
+        if (Boolean.TRUE.equals(request.getRequiresInvoice()) || paymentMethod == Order.PaymentMethod.WALLET) {
             Invoice invoice = Invoice.builder()
                     .order(savedOrder)
                     .companyName(request.getCompanyName() != null && !request.getCompanyName().isBlank() 

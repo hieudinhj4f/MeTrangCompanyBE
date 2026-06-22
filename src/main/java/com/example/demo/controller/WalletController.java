@@ -119,16 +119,18 @@ public class WalletController {
             List<UUID> targetIds = idStrings.stream().map(UUID::fromString).toList();
             BigDecimal amount = new BigDecimal(body.get("amount").toString());
             UUID performedBy = (UUID) request.getAttribute(JwtAuthFilter.ATTR_USER_ID);
+            
+            Boolean isTopUpToCeiling = (Boolean) body.getOrDefault("isTopUpToCeiling", false);
 
             if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("Số tiền nạp phải lớn hơn 0");
+                throw new IllegalArgumentException("Số tiền nạp/định mức trần phải lớn hơn 0");
             }
 
-            List<Wallet> updatedWallets = walletService.depositMoneyBulk(targetIds, amount, performedBy);
+            List<Wallet> updatedWallets = walletService.depositMoneyBulk(targetIds, amount, performedBy, isTopUpToCeiling);
 
             return ResponseEntity.ok(Map.of(
                     "status", "Thành công",
-                    "message", "Nạp tiền hàng loạt hoàn tất",
+                    "message", isTopUpToCeiling ? "Nạp bù định mức trần hoàn tất" : "Nạp tiền hàng loạt hoàn tất",
                     "totalProcessed", updatedWallets.size()
             ));
         } catch (Exception e) {

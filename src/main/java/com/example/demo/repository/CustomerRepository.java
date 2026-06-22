@@ -10,8 +10,7 @@ import java.util.UUID;
 
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, UUID> {
-    
-    // Tìm kiếm khách hàng theo Email (thường dùng cho đăng nhập)
+
     Optional<Customer> findByEmail(String email);
 
     Optional<Customer> findByPhoneNumber(String phoneNumber);
@@ -20,9 +19,7 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
 
     Optional<Customer> findByTaxCode(String taxCode);
 
-    // 2. Lấy danh sách khách hàng theo phân loại (RETAIL, WORKER, ENTERPRISE)
     List<Customer> findByCustomerType(Customer.CustomerType customerType);
 
-    // Lấy danh sách công nhân thuộc về một doanh nghiệp
     List<Customer> findByEnterpriseId(UUID enterpriseId);
 }

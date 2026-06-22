@@ -6,5 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface WarehouseRepository extends JpaRepository<Warehouse, Integer> {
-    // Không cần viết gì thêm, JpaRepository đã lo hết các hàm findById cho mình rồi
 }

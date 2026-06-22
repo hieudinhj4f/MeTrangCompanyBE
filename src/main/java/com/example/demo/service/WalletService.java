@@ -20,8 +20,29 @@ public class WalletService {
     private final UserRepository userRepository;
 
     @Transactional
-    public Wallet depositMoney(UUID customerOrUserId, BigDecimal amount, UUID performedBy) {
+    public Wallet depositMoney(UUID customerOrUserId, BigDecimal amount, UUID performedBy, boolean isTopUpToCeiling) {
         Customer targetCustomer = customerService.resolveOrCreateCustomer(customerOrUserId);
+
+        Wallet targetWallet = walletRepository.findByCustomerId(targetCustomer.getId())
+                .orElseGet(() -> walletRepository.save(Wallet.builder()
+                        .customer(targetCustomer)
+                        .balance(BigDecimal.ZERO)
+                        .build()));
+
+        BigDecimal actualAmountToDeposit = amount;
+        if (isTopUpToCeiling) {
+            BigDecimal currentBalance = targetWallet.getBalance();
+            if (currentBalance.compareTo(amount) >= 0) {
+                // Đã đạt hoặc vượt mức trần, không nạp bù thêm
+                return targetWallet;
+            } else {
+                actualAmountToDeposit = amount.subtract(currentBalance);
+            }
+        }
+
+        if (actualAmountToDeposit.compareTo(BigDecimal.ZERO) <= 0) {
+            return targetWallet;
+        }
 
         String performedByName = "Hệ thống";
         if (performedBy != null) {
@@ -36,7 +57,7 @@ public class WalletService {
                         throw new RuntimeException("Tài khoản doanh nghiệp chưa được thiết lập hồ sơ!");
                     }
                     Wallet enterpriseWallet = getWalletByCustomerId(enterpriseCustomer.getId());
-                    BigDecimal newBalance = enterpriseWallet.getBalance().subtract(amount);
+                    BigDecimal newBalance = enterpriseWallet.getBalance().subtract(actualAmountToDeposit);
                     
                     BigDecimal creditLimit = enterpriseCustomer.getCreditLimit() != null ? enterpriseCustomer.getCreditLimit() : BigDecimal.ZERO;
                     if (newBalance.compareTo(creditLimit.negate()) < 0) {
@@ -48,9 +69,9 @@ public class WalletService {
                     
                     transactionRepository.save(TransactionHistory.builder()
                             .wallet(enterpriseWallet)
-                            .amount(amount.negate())
+                            .amount(actualAmountToDeposit.negate())
                             .type("WITHDRAW")
-                            .description("Nạp tiền cho công nhân " + (targetCustomer.getFullName() != null ? targetCustomer.getFullName() : ""))
+                            .description((isTopUpToCeiling ? "Nạp bù tiền ăn ca đến mức trần cho công nhân " : "Nạp tiền cho công nhân ") + (targetCustomer.getFullName() != null ? targetCustomer.getFullName() : ""))
                             .createdAt(LocalDateTime.now())
                             .performedBy(performedBy)
                             .performedByName(performedByName)
@@ -59,26 +80,25 @@ public class WalletService {
             }
         }
 
-        Wallet targetWallet = walletRepository.findByCustomerId(targetCustomer.getId())
-                .orElseGet(() -> walletRepository.save(Wallet.builder()
-                        .customer(targetCustomer)
-                        .balance(BigDecimal.ZERO)
-                        .build()));
-
-        targetWallet.setBalance(targetWallet.getBalance().add(amount));
+        targetWallet.setBalance(targetWallet.getBalance().add(actualAmountToDeposit));
         Wallet savedTargetWallet = walletRepository.save(targetWallet);
 
         transactionRepository.save(TransactionHistory.builder()
                 .wallet(savedTargetWallet)
-                .amount(amount)
+                .amount(actualAmountToDeposit)
                 .type("DEPOSIT")
-                .description("Nạp tiền vào ví")
+                .description(isTopUpToCeiling ? "Nạp bù tiền ăn ca đến mức trần định mức" : "Nạp tiền vào ví")
                 .createdAt(LocalDateTime.now())
                 .performedBy(performedBy)
                 .performedByName(performedByName)
                 .build());
 
         return savedTargetWallet;
+    }
+
+    @Transactional
+    public Wallet depositMoney(UUID customerOrUserId, BigDecimal amount, UUID performedBy) {
+        return depositMoney(customerOrUserId, amount, performedBy, false);
     }
     public Wallet getWalletByCustomerId(UUID customerId) {
         return walletRepository.findByCustomerId(customerId)
@@ -104,10 +124,15 @@ public class WalletService {
     }
 
     @Transactional
-    public List<Wallet> depositMoneyBulk(List<UUID> customerOrUserIds, BigDecimal amount, UUID performedBy) {
+    public List<Wallet> depositMoneyBulk(List<UUID> customerOrUserIds, BigDecimal amount, UUID performedBy, boolean isTopUpToCeiling) {
         return customerOrUserIds.stream()
-                .map(id -> depositMoney(id, amount, performedBy))
+                .map(id -> depositMoney(id, amount, performedBy, isTopUpToCeiling))
                 .toList();
+    }
+
+    @Transactional
+    public List<Wallet> depositMoneyBulk(List<UUID> customerOrUserIds, BigDecimal amount, UUID performedBy) {
+        return depositMoneyBulk(customerOrUserIds, amount, performedBy, false);
     }
 
     @Transactional

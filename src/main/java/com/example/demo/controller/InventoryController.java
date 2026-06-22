@@ -54,9 +54,7 @@ public class InventoryController {
         return ResponseEntity.ok(list);
     }
 
-    /**
-     * 3. Cảnh báo tồn kho thấp (Dưới mức threshold, mặc định là 10)
-     */
+
     @GetMapping("/low-stock-alerts/{warehouseId}")
     public ResponseEntity<?> getLowStockAlerts(
             @PathVariable Integer warehouseId,
@@ -68,10 +66,6 @@ public class InventoryController {
         return ResponseEntity.ok(lowStockList);
     }
 
-    /**
-     * 4. Cảnh báo thuốc sắp hết hạn (Trong vòng X ngày tới)
-     * API: /expired-alerts?days=30
-     */
     private final com.example.demo.repository.BatchRepository batchRepository;
 
     @GetMapping("/expired-alerts")
